@@ -16,17 +16,17 @@
 #define SYLAR_LOG_LEVEL(logger, level)                                         \
     if (logger->getLevel() <= level) {                                         \
         ytccc::LogEventWrap(                                                   \
-                ytccc::LogEvent::ptr(new LogEvent(                             \
-                        logger, level __FILE__, __LINE__, 0,                   \
+                ytccc::LogEvent::ptr(new ytccc::LogEvent(                      \
+                        logger, level, __FILE__, __LINE__, 0,                  \
                         ytccc::GetThreadID(), ytccc::GetFiberID(), time(0))))  \
                 .getSS();                                                      \
     }
 
-#define SYLAR_LOG_DEBUG(logger) SYLAR_LOG_LEVEL(logger, ytccc::DEBUG)
-#define SYLAR_LOG_INFO(logger) SYLAR_LOG_LEVEL(logger, ytccc::INFO)
-#define SYLAR_LOG_WARN(logger) SYLAR_LOG_LEVEL(logger, ytccc::WARN)
-#define SYLAR_LOG_ERROR(logger) SYLAR_LOG_LEVEL(logger, ytccc::ERROR)
-#define SYLAR_LOG_FATAL(logger) SYLAR_LOG_LEVEL(logger, ytccc::FATAL)
+#define SYLAR_LOG_DEBUG(logger) SYLAR_LOG_LEVEL(logger, ytccc::LogLevel::DEBUG)
+#define SYLAR_LOG_INFO(logger) SYLAR_LOG_LEVEL(logger, ytccc::LogLevel::INFO)
+#define SYLAR_LOG_WARN(logger) SYLAR_LOG_LEVEL(logger, ytccc::LogLevel::WARN)
+#define SYLAR_LOG_ERROR(logger) SYLAR_LOG_LEVEL(logger, ytccc::LogLevel::ERROR)
+#define SYLAR_LOG_FATAL(logger) SYLAR_LOG_LEVEL(logger, ytccc::LogLevel::FATAL)
 
 
 namespace ytccc {
