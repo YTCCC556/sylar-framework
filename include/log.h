@@ -13,14 +13,16 @@
 #include <string>
 #include <vector>
 
+/*ytccc::LogEventWrap()返回值是一个指向对象的指针或引用，那么该对象是在堆上分配的，
+若返回值是对象本身，意味着对象是在栈上创建的，对象的声明周期受到函数作用域的影响。
+ 代码块作用域，if for while创建的变量，只能在统一代码块内访问*/
 #define SYLAR_LOG_LEVEL(logger, level)                                         \
-    if (logger->getLevel() <= level) {                                         \
-        ytccc::LogEventWrap(                                                   \
-                ytccc::LogEvent::ptr(new ytccc::LogEvent(                      \
-                        logger, level, __FILE__, __LINE__, 0,                  \
-                        ytccc::GetThreadID(), ytccc::GetFiberID(), time(0))))  \
-                .getSS();                                                      \
-    }
+    if (logger->getLevel() <= level)                                           \
+    ytccc::LogEventWrap(                                                       \
+            ytccc::LogEvent::ptr(new ytccc::LogEvent(                          \
+                    logger, level, __FILE__, __LINE__, 0,                      \
+                    ytccc::GetThreadID(), ytccc::GetFiberID(), time(0))))      \
+            .getSS()
 
 #define SYLAR_LOG_DEBUG(logger) SYLAR_LOG_LEVEL(logger, ytccc::LogLevel::DEBUG)
 #define SYLAR_LOG_INFO(logger) SYLAR_LOG_LEVEL(logger, ytccc::LogLevel::INFO)
@@ -63,6 +65,9 @@ namespace ytccc {
         const std::string &getThreadName() const { return m_threadName; }
         std::shared_ptr<Logger> getLogger() const { return m_logger; }
         LogLevel::Level getLevel() const { return m_level; }
+
+        void format(const char *fmt, ...);
+        void format(const char *fmt, va_list al);
 
     private:
         const char *m_file = nullptr;// 文件名

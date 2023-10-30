@@ -20,9 +20,15 @@ int main(int argc, char **grav) {
     logger->log(ytccc::LogLevel::DEBUG, event);//输出日志
     logger->log(ytccc::LogLevel::ERROR, event);
     std::cout << "FIRST END " << std::endl;*/
-
-    SYLAR_LOG_INFO(logger) << "test macro";
-
+    std::cout << "hello log" << std::endl;
+    // todo 有时候以下测试会失效，原因未知，不输出任何内容
+    //以流的形式打印日志 而不是SYLAR_LOG_INFO(logger，"test macro");
+    SYLAR_LOG_INFO(logger) << "test macro"; // LogEventWrap在这行代码的作用域内创建并摧毁
+    SYLAR_LOG_DEBUG(logger) << "test macro debug";
+    SYLAR_LOG_ERROR(logger) << "test macro error";
+    SYLAR_LOG_FATAL(logger) << "test macro fatal";
+    SYLAR_LOG_WARN(logger) << "test macro warn";
+    std::cout << "end log" << std::endl;
 
     return 0;
 }

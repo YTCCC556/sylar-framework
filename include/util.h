@@ -9,6 +9,7 @@
 #include <sys/syscall.h>
 #include <cstdio>
 #include <zconf.h>
+#include <stdint.h>
 
 namespace ytccc{
 

@@ -8,6 +8,8 @@
 #include <map>
 #include <sstream>
 #include <utility>
+#include <stdarg.h>
+
 
 namespace ytccc {
 
@@ -146,14 +148,33 @@ namespace ytccc {
     LogEvent::~LogEvent() {}
 
 
+    void LogEvent::format(const char *fmt, ...){
+        va_list al;
+        va_start(al,fmt);
+        format(fmt,al);
+        va_end(al);
+    }
+    void LogEvent::format(const char *fmt, va_list al){
+        char* buf = nullptr;
+        //指针的取地址运算符 & 获取的是指向变量或对象的地址
+        int len = vasprintf(&buf,fmt,al);
+        if(len!=-1){
+            m_ss << std::string(buf,len);
+            free(buf);
+        }
+    }
+
     //LogEventWrap
-    LogEventWrap::LogEventWrap(LogEvent::ptr e) : m_event(std::move(e)) {
+    LogEventWrap::LogEventWrap(LogEvent::ptr e) : m_event(e) {
         //        wrap析构的时候将event写入
     }
     LogEventWrap::~LogEventWrap() {
+        //获得指向logger对象的指针，并调用log方法
         m_event->getLogger()->log(m_event->getLevel(), m_event);
     }
-    std::stringstream &LogEventWrap::getSS() {}
+    std::stringstream &LogEventWrap::getSS() {
+        return m_event->getSS();
+    }
 
 
     //LogLevel实现
