@@ -29,3 +29,33 @@ system:
       k1: 90
       k2: 2
       k3: 8
+
+class:
+  person:
+    name: ytccc
+    age: 18
+    sex: true
+  map:
+    ytccc01:
+      name: ytccc01
+      age: 19
+      sex: false
+    ytccc02:
+      name: ytccc02
+      age: 25
+      sex: true
+  vec_map:
+    k1:
+      - name: m11
+        age: 33
+        sex: true
+      - name: m12
+        age: 34
+        sex: false
+    k2:
+      - name: m21
+        age: 25
+        sex: true
+      - name: m22
+        age: 26
+        sex: false

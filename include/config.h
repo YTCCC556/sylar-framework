@@ -35,6 +35,7 @@ public:
 
     virtual std::string toString() = 0;
     virtual bool fromString(const std::string &val) = 0;
+    virtual std::string getTypeName() const = 0;
 
 private:
     std::string m_name;
@@ -262,7 +263,7 @@ public:
         }
         return false;
     }
-
+    std::string getTypeName() const override { return typeid(T).name(); }
     const T getValue() const { return m_val; }
     void setValue(const T &v) { m_val = v; }
 
@@ -278,12 +279,24 @@ public:
     static typename ConfigVar<T>::ptr
     Lookup(const std::string &name, const T &default_value,
            const std::string &description = "") {
-        auto tmp = Lookup<T>(name);
-        if (tmp) {
-            SYLAR_LOG_INFO(SYLAR_LOG_ROOT())
-                    << "Lookup name = " << name << "exists";
-            return tmp;
+        //返回为空，两种情况，真不存在，或者存在但是类型不同
+        auto it = m_datas.find(name);
+        if (it != m_datas.end()) {
+            auto tmp = std::dynamic_pointer_cast<ConfigVar<T>>(it->second);
+            if (tmp) {
+                SYLAR_LOG_INFO(SYLAR_LOG_ROOT())
+                        << "Lookup name = " << name << " exists";
+                return tmp;
+            } else {
+                SYLAR_LOG_ERROR(SYLAR_LOG_ROOT())
+                        << "Lookup name = " << name << " exists but type not "
+                        << typeid(T).name()
+                        << "real_type = " << it->second->getTypeName() << ""
+                        << it->second->toString();
+                return nullptr;
+            }
         }
+
         if (name.find_first_not_of("qwertyuiopasdfghjklzxcvbnm"
                                    "._0123456789") != std::string::npos) {
             SYLAR_LOG_ERROR(SYLAR_LOG_ROOT()) << "Lookup name invall" << name;
@@ -308,6 +321,7 @@ public:
 private:
     static ConfigVarMap m_datas;
 };
+
 
 
 }// namespace ytccc
