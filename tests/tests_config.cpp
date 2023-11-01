@@ -56,7 +56,7 @@ void print_yaml(const YAML::Node &node, int level) {
 }
 
 void test_yaml() {
-    YAML::Node root = YAML::LoadFile("../bin/conf/log.yml");
+    YAML::Node root = YAML::LoadFile("../bin/conf/test.yml");
     print_yaml(root, 0);
     //    SYLAR_LOG_INFO(SYLAR_LOG_ROOT()) << root;
 }
@@ -96,7 +96,7 @@ void test_config() {
     XX_M(g_map_value_config, map, before);
     XX_M(g_unordermap_value_config, unordermap, before);
 
-    YAML::Node root = YAML::LoadFile("../bin/conf/log.yml");
+    YAML::Node root = YAML::LoadFile("../bin/conf/test.yml");
     ytccc::Config::LoadFromYaml(root);
 
 
@@ -111,6 +111,7 @@ void test_config() {
     XX(g_unorderset_value_config, unorderset, after);
     XX_M(g_map_value_config, map, after);
     XX_M(g_unordermap_value_config, unordermap, after);
+#undef XX_M
 #undef XX
 }
 class Person {
@@ -125,6 +126,10 @@ public:
            << "]";
         return ss.str();
     }
+
+    bool operator==(const Person &oth) const {
+        return m_name == oth.m_name && m_age == oth.m_age && m_sex == oth.m_sex;
+    };
 };
 namespace ytccc {
 //自定义偏特化
@@ -184,7 +189,7 @@ void test_class() {
     XX_PM(g_person_map, before);
     SYLAR_LOG_INFO(SYLAR_LOG_ROOT())
             << "before vec map " << g_person_vec_map->toString();
-    YAML::Node root = YAML::LoadFile("../bin/conf/log.yml");
+    YAML::Node root = YAML::LoadFile("../bin/conf/test.yml");
     ytccc::Config::LoadFromYaml(root);
     SYLAR_LOG_INFO(SYLAR_LOG_ROOT())
             << "after" << g_person->getValue().toString() << "-"
@@ -192,6 +197,7 @@ void test_class() {
     XX_PM(g_person_map, after);
     SYLAR_LOG_INFO(SYLAR_LOG_ROOT())
             << "after vec map " << g_person_vec_map->toString();
+#undef XX_PM
 }
 
 int main(int argc, char **argv) {

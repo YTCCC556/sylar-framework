@@ -55,13 +55,14 @@
 #define SYLAR_LOG_FMT_FATAL(logger, fmt, ...)                                  \
     SYLAR_LOG_FMT_LEVEL(logger, ytccc::LogLevel::FATAL, fmt, __VA_ARGS__)
 
-
 #define SYLAR_LOG_ROOT() ytccc::LoggerMgr::GetInstance()->getRoot()
+#define SYLAR_LOG_NAME(name) ytccc::LoggerMgr::GetInstance()->getLogger(name)
 
 
 namespace ytccc {
 
 class Logger;
+class LoggerManager;
 
 // 日志级别
 class LogLevel {
@@ -194,6 +195,7 @@ private:
 
 //日志器
 class Logger : public std::enable_shared_from_this<Logger> {
+    friend class LoggerManager;
 public:
     typedef std::shared_ptr<Logger> ptr;
 
@@ -219,6 +221,7 @@ private:
     LogLevel::Level m_level;                //日志级别
     std::list<LogAppender::ptr> m_appenders;//Appender集合
     LogFormatter::ptr m_formatter;
+    Logger::ptr m_root;
 };
 
 class LoggerManager {

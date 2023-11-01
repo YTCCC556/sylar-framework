@@ -58,7 +58,7 @@ public:
     NameFormatItem(const std::string &str = "") {}
     void format(std::ostream &os, Logger::ptr logger, LogLevel::Level level,
                 LogEvent::ptr event) override {
-        os << logger->getName();
+        os << event->getLogger()->getName();
     }
 };
 class ThreadIDFormatItem : public LogFormatter::FormatItem {
@@ -364,7 +364,11 @@ void Logger::log(LogLevel::Level level, LogEvent::ptr event) {
     if (level >= m_level) {
         auto self =
                 shared_from_this();//std::shared_ptr 无法通过this指针创建，会导致循环引用，
-        for (auto &i: m_appenders) { i->log(self, level, event); }
+        if (!m_appenders.empty()) {
+            for (auto &i: m_appenders) { i->log(self, level, event); }
+        } else if (m_root) {
+            m_root->log(level, event);
+        }
     }
 }
 
@@ -394,10 +398,20 @@ LoggerManager::LoggerManager() {
     m_root.reset(new Logger);
     // 给Logger添加默认appender
     m_root->addAppender(LogAppender::ptr(new StdoutLogAppender));
+    init();
 }
 
 Logger::ptr LoggerManager::getLogger(const std::string &name) {
     auto it = m_logger.find(name);
-    return it == m_logger.end() ? m_root : it->second;
+    if (it != m_logger.end()) { return it->second; }
+    Logger::ptr logger(new Logger(name));
+    logger->m_root = m_root;
+    m_logger[name] = logger;
+    return logger;
 }
+
+void LoggerManager::init(){
+
+}
+
 }// namespace ytccc
