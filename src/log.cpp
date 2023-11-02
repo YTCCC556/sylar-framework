@@ -446,9 +446,16 @@ void Logger::delAppender(LogAppender::ptr appender) {
         break;
     }
 }
+
 void Logger::clearAppender() { m_appenders.clear(); }
 
-void Logger::setFormatter(LogFormatter::ptr val) { m_formatter = val; }
+void Logger::setFormatter(LogFormatter::ptr val) {
+    m_formatter = val;
+    for (auto &i: m_appenders) {
+        if (!i->m_hasFormatter) { i->m_formatter = m_formatter; }
+    }
+}
+
 void Logger::setFormatter(const std::string &val) {
     ytccc::LogFormatter::ptr new_val(new ytccc::LogFormatter(val));
     if (new_val->isError()) {
@@ -456,7 +463,8 @@ void Logger::setFormatter(const std::string &val) {
                   << "invalid formatter" << std::endl;
         return;
     }
-    m_formatter = new_val;
+//    m_formatter = new_val;
+    setFormatter(new_val);
 }
 LogFormatter::ptr Logger::getFormatter() { return m_formatter; }
 
