@@ -298,8 +298,8 @@ public:
     Lookup(const std::string &name, const T &default_value,
            const std::string &description = "") {
         //返回为空，两种情况，真不存在，或者存在但是类型不同
-        auto it = m_datas.find(name);
-        if (it != m_datas.end()) {
+        auto it = GetDatas().find(name);
+        if (it != GetDatas().end()) {
             auto tmp = std::dynamic_pointer_cast<ConfigVar<T>>(it->second);
             if (tmp) {
                 SYLAR_LOG_INFO(SYLAR_LOG_ROOT())
@@ -322,14 +322,14 @@ public:
         }
         typename ConfigVar<T>::ptr v(
                 new ConfigVar<T>(name, default_value, description));
-        m_datas[name] = v;
+        GetDatas()[name] = v;
         return v;
     }
 
     template<class T>
     static typename ConfigVar<T>::ptr Lookup(const std::string &name) {
-        auto it = m_datas.find(name);
-        if (it == m_datas.end()) { return nullptr; }
+        auto it = GetDatas().find(name);
+        if (it == GetDatas().end()) { return nullptr; }
         return std::dynamic_pointer_cast<ConfigVar<T>>(it->second);
     }
 
@@ -337,7 +337,10 @@ public:
     static ConfigVarBase::ptr LookupBase(const std::string &name);
 
 private:
-    static ConfigVarMap m_datas;
+    static ConfigVarMap& GetDatas(){
+        static ConfigVarMap m_datas;
+        return m_datas;
+    }
 };
 
 

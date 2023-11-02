@@ -67,8 +67,16 @@ class LoggerManager;
 // 日志级别
 class LogLevel {
 public:
-    enum Level { DEBUG = 1, INFO = 2, WARN = 3, ERROR = 4, FATAL = 5 };
+    enum Level {
+        DEBUG = 1,
+        INFO = 2,
+        WARN = 3,
+        ERROR = 4,
+        FATAL = 5,
+        UNKNOW = 6
+    };
     static const char *Tostring(LogLevel::Level level);
+    static LogLevel::Level FromString(const std::string& str);
 
 private:
 };
@@ -134,6 +142,8 @@ public:
     std::string format(std::shared_ptr<Logger> logger, LogLevel::Level level,
                        LogEvent::ptr event);
     void init();
+    bool isError() const { return m_error; }
+    const std::string getPattern() const {return m_pattern;}
 
 public:
     class FormatItem {
@@ -152,6 +162,7 @@ private:
 
 // 日志输出地
 class LogAppender {
+    friend class Logger;
 public:
     typedef std::shared_ptr<LogAppender> ptr;
     virtual ~LogAppender() {}
@@ -159,13 +170,16 @@ public:
     virtual void log(std::shared_ptr<Logger> logger, LogLevel::Level level,
                      LogEvent::ptr event) = 0;
 
-    void setFormatter(LogFormatter::ptr val) { m_formatter = val; }
+    virtual std::string toYamlString() = 0;
+
+    void setFormatter(LogFormatter::ptr val);
     LogFormatter::ptr getFormatter() const { return m_formatter; }
     void setLevel(LogLevel::Level level) { m_level = level; }
     LogLevel::Level getLevel() const { return m_level; }
 
 protected:
     LogLevel::Level m_level;
+    bool m_hasFormatter = false;
     LogFormatter::ptr m_formatter;// 定义输出格式
 };
 
@@ -175,7 +189,7 @@ public:
     typedef std::shared_ptr<StdoutLogAppender> ptr;
     void log(std::shared_ptr<Logger> logger, LogLevel::Level level,
              LogEvent::ptr event) override;
-
+    std::string toYamlString() override;
 private:
 };
 
@@ -187,7 +201,7 @@ public:
     void log(std::shared_ptr<Logger> logger, LogLevel::Level level,
              LogEvent::ptr event) override;
     bool reopen();
-
+    std::string toYamlString() override;
 private:
     std::string m_filename;
     std::ofstream m_filestream;
@@ -196,6 +210,7 @@ private:
 //日志器
 class Logger : public std::enable_shared_from_this<Logger> {
     friend class LoggerManager;
+
 public:
     typedef std::shared_ptr<Logger> ptr;
 
@@ -211,10 +226,17 @@ public:
 
     void addAppender(LogAppender::ptr appender);
     void delAppender(LogAppender::ptr appender);
+    void clearAppender();
     LogLevel::Level getLevel() const { return m_level; }
     void setLevel(LogLevel::Level val) { m_level = val; }
 
     const std::string &getName() const { return m_name; }
+
+    void setFormatter(LogFormatter::ptr val);
+    void setFormatter(const std::string &val);
+    LogFormatter::ptr getFormatter();
+
+    std::string toYamlString();
 
 private:
     std::string m_name;                     //日志名称
@@ -231,7 +253,7 @@ public:
     void init();
 
     Logger::ptr getRoot() const { return m_root; }
-
+    std::string toYamlString();
 private:
     std::map<std::string, Logger::ptr> m_logger;
     Logger::ptr m_root;

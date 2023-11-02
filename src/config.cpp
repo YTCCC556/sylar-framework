@@ -6,7 +6,6 @@
 
 namespace ytccc {
 
-Config::ConfigVarMap Config::m_datas;
 
 static void
 ListAllMember(const std::string &prefix, const YAML::Node &node,
@@ -29,8 +28,8 @@ ListAllMember(const std::string &prefix, const YAML::Node &node,
 
 //查找当前项
 ConfigVarBase::ptr Config::LookupBase(const std::string &name) {
-    auto it = m_datas.find(name);
-    return it == m_datas.end() ? nullptr : it->second;
+    auto it = GetDatas().find(name);
+    return it == GetDatas().end() ? nullptr : it->second;
 }
 
 void Config::LoadFromYaml(const YAML::Node &root) {

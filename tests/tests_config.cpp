@@ -3,6 +3,7 @@
 //
 #include "config.h"
 #include "log.h"
+#include <iostream>
 #include <yaml-cpp/yaml.h>
 
 ytccc::ConfigVar<int>::ptr g_int_value_config =
@@ -200,6 +201,18 @@ void test_class() {
 #undef XX_PM
 }
 
+void test_log() {
+    static ytccc::Logger::ptr system_log = SYLAR_LOG_NAME("system");
+    SYLAR_LOG_INFO(system_log) << "hello system" << std::endl;
+    std::cout << ytccc::LoggerMgr::GetInstance()->toYamlString() << std::endl;
+    YAML::Node root = YAML::LoadFile("../bin/conf/log.yml");
+    ytccc::Config::LoadFromYaml(root);
+    std::cout << "===========" << std::endl;
+    std::cout << ytccc::LoggerMgr::GetInstance()->toYamlString() << std::endl;
+    std::cout << "===========" << std::endl;
+    std::cout << root << std::endl;
+}
+
 int main(int argc, char **argv) {
 
     //    SYLAR_LOG_INFO(SYLAR_LOG_ROOT()) << g_int_value_config->getValue();
@@ -207,7 +220,8 @@ int main(int argc, char **argv) {
 
     //    test_yaml();
     //    test_config();
-    test_class();
+    //    test_class();
+    test_log();
 
     return 0;
 }
