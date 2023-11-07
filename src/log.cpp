@@ -190,7 +190,7 @@ const char *LogLevel::Tostring(LogLevel::Level level) {
         XX(FATAL);
 #undef XX
         default:
-            return "UNKNOW";
+            return "UNKNOWN";
     }
     return "UBKNOW";
 }
@@ -235,30 +235,32 @@ void LogFormatter::init() {
     for (size_t i = 0; i < m_pattern.size(); ++i) {
         // 当前位为%，才能通过此句代码
         if (m_pattern[i] != '%') {
-            n_str.append(1, m_pattern[i]);
+            //当前位不为‘%’，存入n_str，继续循环
+            n_str.append(1, m_pattern[i]);//添加1个m_pattern[i]
             continue;
         }
-        // 下一位也为%，转义字符
+        // 下一位也为%，转义字符,即%%的情况，向n_str中存入‘%%’
         if ((i + 1) < m_pattern.size()) {
+            //当前以及下一位都为‘%’
             if (m_pattern[i + 1] == '%') {
                 n_str.append(1, '%');
                 continue;
             }
         }
         // 为m_pattern[i]=='%'而 m_pattern[i+1]!='%'的情况
-        size_t n = i + 1;    //%后的位置
-        int fmt_status = 0;  //记录大括号{}匹配状态
+        size_t n = i + 1;    // %后的位置
+        int fmt_status = 0;  // 记录大括号{}匹配状态
         size_t fmt_begin = 0;// 记录左大括号{出现的位置
 
         std::string str;//while循环里使用
         std::string fmt;//对应tuple里的fmt
 
-        //用于检测大括号{}格式 例如%d{%Y-%m-%d %H:%M:%S}
+        //用于检测大括号{}格式 例如%d{%Y-%m-%d %H:%M:%S}，只是将大括号中内容存入str中，没有进行处理
         while (n < m_pattern.size()) {
             // 格式串一直遍历，遇到不在大括号内，非字符，非{}，将【i+1，n）区间的格式字符串放入str。长度为n-（i+1）
             if (!fmt_status && (!isalpha(m_pattern[n]) && m_pattern[n] != '{' &&
                                 m_pattern[n] != '}')) {
-                str = m_pattern.substr(i + 1, n - i - 1);
+                str = m_pattern.substr(i + 1, n - i - 1);//位置，长度
                 break;
             }
             if (fmt_status == 0) {
@@ -271,6 +273,7 @@ void LogFormatter::init() {
                 }
             } else if (fmt_status == 1) {
                 if (m_pattern[n] == '}') {
+                    //fmt是大括号内的完整内容
                     fmt = m_pattern.substr(fmt_begin + 1, n - fmt_begin - 1);
                     fmt_status = 0;
                     ++n;
@@ -289,7 +292,8 @@ void LogFormatter::init() {
                                  0);//非格式字符串放入三元组
                 n_str.clear();
             }
-            vec.emplace_back(str, fmt, 1);
+            //TODO 这里的fmt没有判空就存入吗
+            vec.emplace_back(str, fmt, 1);//1是指{}内的格式吗
             i = n - 1;
         } else if (fmt_status == 1) {//大括号不能匹配
             std::cout << "pattern parse error: " << m_pattern << " - "
@@ -347,9 +351,6 @@ void LogFormatter::init() {
 
 
 //LogAppender
-void LogAppender::log(std::shared_ptr<Logger> logger, LogLevel::Level level,
-                      LogEvent::ptr event) {}
-
 void LogAppender::setFormatter(LogFormatter::ptr val) {
     m_formatter = val;
     if (m_formatter) {
@@ -363,7 +364,7 @@ void StdoutLogAppender::log(std::shared_ptr<Logger> logger,
                             LogLevel::Level level, LogEvent::ptr event) {
     if (level >= m_level) {
         std::string str = m_formatter->format(logger, level, event);
-        std::cout << str << std::endl;
+        //        std::cout << str << std::endl;
     }
 }
 std::string StdoutLogAppender::toYamlString() {
@@ -463,7 +464,7 @@ void Logger::setFormatter(const std::string &val) {
                   << "invalid formatter" << std::endl;
         return;
     }
-//    m_formatter = new_val;
+    //    m_formatter = new_val;
     setFormatter(new_val);
 }
 LogFormatter::ptr Logger::getFormatter() { return m_formatter; }
@@ -486,7 +487,7 @@ static std::string name = "ytccc";
 
 //LoggerManager 实现
 LoggerManager::LoggerManager() {
-    // 重置智能指针
+    // 重置智能指针 m_root Logger::ptr类型
     m_root.reset(new Logger);
     // 给Logger添加默认appender
     m_root->addAppender(LogAppender::ptr(new StdoutLogAppender));
@@ -498,6 +499,7 @@ LoggerManager::LoggerManager() {
 Logger::ptr LoggerManager::getLogger(const std::string &name) {
     auto it = m_logger.find(name);
     if (it != m_logger.end()) { return it->second; }
+
     Logger::ptr logger(new Logger(name));
     logger->m_root = m_root;
     m_logger[name] = logger;

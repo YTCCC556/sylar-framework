@@ -42,13 +42,14 @@ private:
     std::string m_description;
 };
 
-//从F类型转化成T类型
+//从F类型转化成T类型 仿函数
 template<class F, class T>
 class LexicalCast {
 public:
     T operator()(const F &v) { return boost::lexical_cast<T>(v); }
 };
-//常用容器的偏特化
+
+//常用容器的偏特化 vector
 template<class T>
 class LexicalCast<std::string, std::vector<T>> {
 public:
@@ -108,7 +109,6 @@ public:
     }
 };
 
-
 //set支持
 template<class T>
 class LexicalCast<std::string, std::set<T>> {
@@ -138,7 +138,6 @@ public:
         return ss.str();
     }
 };
-
 //unordered_set支持
 template<class T>
 class LexicalCast<std::string, std::unordered_set<T>> {
@@ -231,8 +230,9 @@ public:
 };
 
 
-//FromStr T operator()(const std::string&)
-//ToStr std::string operator()()const T&
+/*FromStr T operator()(const std::string&)
+ToStr std::string operator()()const T&
+*/
 template<class T, class FromStr = LexicalCast<std::string, T>,
          class ToStr = LexicalCast<T, std::string>>
 class ConfigVar : public ConfigVarBase {
@@ -244,6 +244,7 @@ public:
     ConfigVar(const std::string &name, const T &default_value,
               const std::string &description = "")
         : ConfigVarBase(name, description), m_val(default_value) {}
+
     std::string toString() override {
         try {
             //return boost::lexical_cast<std::string>(m_val);
@@ -255,6 +256,7 @@ public:
         }
         return "";
     }
+
     bool fromString(const std::string &val) override {
         try {
             //            m_val = boost::lexical_cast<T>(val);
@@ -266,6 +268,7 @@ public:
         }
         return false;
     }
+
     std::string getTypeName() const override { return typeid(T).name(); }
     const T getValue() const { return m_val; }
     void setValue(const T &v) {
@@ -282,7 +285,6 @@ public:
     }
     void clearListener() { m_cbs.clear(); }
 
-
 private:
     T m_val;
     //变更回调函数组，functional没有比较函数，
@@ -295,12 +297,20 @@ public:
 
     template<class T>
     static typename ConfigVar<T>::ptr
+    // 用于创建或获取对象参数名的配置参数
+    // 配置参数名称，T类型的参数默认值，字符串形式的参数描述
     Lookup(const std::string &name, const T &default_value,
            const std::string &description = "") {
-        //返回为空，两种情况，真不存在，或者存在但是类型不同
         auto it = GetDatas().find(name);
+        // 在map中找到相同名称的配置项
         if (it != GetDatas().end()) {
+            // it.second是ConfigVarBase::ptr类型指针，指向ConfigVar某个全特化对象
+            // 属于基类转换成子类
             auto tmp = std::dynamic_pointer_cast<ConfigVar<T>>(it->second);
+            /* 返回为空，两种情况，真不存在，或者存在但是类型不同
+             * 如果tmp为空，表示map中存在相同名字的配置项，
+             * 但是map中配置项的参数类型和传入的默认值的参数类型不一致，返回nullptr
+             * 否者返回正确的配置参数 */
             if (tmp) {
                 SYLAR_LOG_INFO(SYLAR_LOG_ROOT())
                         << "Lookup name = " << name << " exists";
@@ -314,7 +324,6 @@ public:
                 return nullptr;
             }
         }
-
         if (name.find_first_not_of("qwertyuiopasdfghjklzxcvbnm"
                                    "._0123456789") != std::string::npos) {
             SYLAR_LOG_ERROR(SYLAR_LOG_ROOT()) << "Lookup name invall" << name;
@@ -325,19 +334,20 @@ public:
         GetDatas()[name] = v;
         return v;
     }
-
+    // 查找配置参数，传入配置参数名称，返回对应的配置参数，若不存在或者类型错误的话，都会返回nullptr
     template<class T>
     static typename ConfigVar<T>::ptr Lookup(const std::string &name) {
         auto it = GetDatas().find(name);
         if (it == GetDatas().end()) { return nullptr; }
         return std::dynamic_pointer_cast<ConfigVar<T>>(it->second);
     }
-
+    // 使用yaml初始化配置模块，传入yaml对象，采用类似于遍历二叉树的方式遍历。
     static void LoadFromYaml(const YAML::Node &root);
+    // 返回基类指针
     static ConfigVarBase::ptr LookupBase(const std::string &name);
 
 private:
-    static ConfigVarMap& GetDatas(){
+    static ConfigVarMap &GetDatas() {
         static ConfigVarMap m_datas;
         return m_datas;
     }

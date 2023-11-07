@@ -5,18 +5,18 @@
 #ifndef SYLAR_FRAMEWORK_UTIL_H
 #define SYLAR_FRAMEWORK_UTIL_H
 
-#include <sys/types.h>
-#include <sys/syscall.h>
 #include <cstdio>
-#include <zconf.h>
 #include <stdint.h>
+#include <sys/syscall.h>
+#include <sys/types.h>
+#include <zconf.h>
 
-namespace ytccc{
+namespace ytccc {
 
-    pid_t GetThreadID();
-    uint32_t GetFiberID();
+pid_t GetThreadID();
+uint32_t GetFiberID();
 
-}
+}// namespace ytccc
 
 
 #endif//SYLAR_FRAMEWORK_UTIL_H

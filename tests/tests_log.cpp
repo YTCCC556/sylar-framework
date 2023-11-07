@@ -51,6 +51,6 @@ int main(int argc, char **grav) {
     // 不用每次去创建log，使用LoggerManager管理log，用的时候直接在内部拿就可以了。
     auto l = ytccc::LoggerMgr::GetInstance()->getLogger("xx");
     SYLAR_LOG_INFO(logger) << "xxx";
-
+    SYLAR_LOG_INFO(SYLAR_LOG_ROOT());
     return 0;
 }

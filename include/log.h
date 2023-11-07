@@ -85,6 +85,7 @@ private:
 class LogEvent {
 public:
     typedef std::shared_ptr<LogEvent> ptr;
+
     LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level,
              const char *m_file, int32_t m_line, uint32_t m_elapse,
              uint32_t m_threadID, uint32_t m_fiberID, uint64_t m_time);
@@ -155,7 +156,7 @@ public:
     };
 
 private:
-    std::string m_pattern;
+    std::string m_pattern; // 日志格式
     std::vector<FormatItem::ptr> m_items;
     bool m_error = false;
 };
