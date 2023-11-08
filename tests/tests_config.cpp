@@ -194,6 +194,7 @@ void test_class() {
             << "before vec map " << g_person_vec_map->toString();
     YAML::Node root = YAML::LoadFile("../bin/conf/test.yml");
     ytccc::Config::LoadFromYaml(root);
+
     SYLAR_LOG_INFO(SYLAR_LOG_ROOT())
             << "after" << g_person->getValue().toString() << "-"
             << g_person->toString();
@@ -223,10 +224,10 @@ int main(int argc, char **argv) {
     //    SYLAR_LOG_INFO(SYLAR_LOG_ROOT()) << g_int_value_config->getValue();
     //    SYLAR_LOG_INFO(SYLAR_LOG_ROOT()) << g_int_value_config->toString();
 
-    test_yaml();
+    // test_yaml();
     //    test_config();
     //    test_class();
-    // test_log();
+    test_log();
 
     return 0;
 }

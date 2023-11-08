@@ -58,7 +58,6 @@
 #define SYLAR_LOG_ROOT() ytccc::LoggerMgr::GetInstance()->getRoot()
 #define SYLAR_LOG_NAME(name) ytccc::LoggerMgr::GetInstance()->getLogger(name)
 
-
 namespace ytccc {
 
 class Logger;
@@ -68,12 +67,12 @@ class LoggerManager;
 class LogLevel {
 public:
     enum Level {
+        UNKNOWN =0,
         DEBUG = 1,
         INFO = 2,
         WARN = 3,
         ERROR = 4,
         FATAL = 5,
-        UNKNOW = 6
     };
     static const char *Tostring(LogLevel::Level level);
     static LogLevel::Level FromString(const std::string& str);

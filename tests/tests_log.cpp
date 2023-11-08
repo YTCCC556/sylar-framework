@@ -6,7 +6,7 @@
 #include <iostream>
 #include <thread>
 
-int main(int argc, char **grav) {
+int test_01(int argc, char **grav) {
     std::cout << "BEGIN RUN " << std::endl;
     ytccc::Logger::ptr logger(new ytccc::Logger);//日志器
     logger->addAppender(ytccc::LogAppender::ptr(
@@ -53,4 +53,63 @@ int main(int argc, char **grav) {
     SYLAR_LOG_INFO(logger) << "xxx";
     SYLAR_LOG_INFO(SYLAR_LOG_ROOT());
     return 0;
+}
+
+
+void test_stdLog() {
+    std::cout << "----------test_stdLog begin----------" << std::endl;
+    // TODO 新建时默认创建的appender在具体调用时，level会变成数字，导致比较失败，而无法输出，暂时去除默认appender。
+    ytccc::Logger::ptr logger(new ytccc::Logger);
+    logger->addAppender(ytccc::LogAppender::ptr(new ytccc::StdoutLogAppender));
+    ytccc::LogEvent::ptr event(new ytccc::LogEvent(
+            logger, ytccc::LogLevel::DEBUG, __FILE__, __LINE__, 0,
+            std::hash<std::thread::id>{}(std::this_thread::get_id()), 0,
+            time(0)));
+    logger->log(ytccc::LogLevel::DEBUG, event);
+    // logger->log(ytc::LogLevel::ERROR, event);
+}
+
+void test_fileLog() {
+    //TODO filelogappender目前存在问题，需要等到util类之后在进行开发
+    ytccc::Logger::ptr logger(new ytccc::Logger);
+    ytccc::LogEvent::ptr event(new ytccc::LogEvent(
+            logger, ytccc::LogLevel::DEBUG, __FILE__, __LINE__, 0,
+            std::hash<std::thread::id>{}(std::this_thread::get_id()), 0,
+            time(0)));
+    ytccc::FileLogAppender::ptr fileLogAppender(
+            new ytccc::FileLogAppender("../log/log.txt"));
+    fileLogAppender->setLevel(ytccc::LogLevel::DEBUG);
+    logger->addAppender(fileLogAppender);
+    logger->log(ytccc::LogLevel::DEBUG, event);
+    logger->log(ytccc::LogLevel::ERROR, event);
+}
+
+void test_macro() {
+    std::cout << "----------test_macro begin----------" << std::endl;
+    ytccc::Logger::ptr logger(new ytccc::Logger);
+    logger->addAppender(ytccc::LogAppender::ptr(new ytccc::StdoutLogAppender));
+    SYLAR_LOG_DEBUG(logger) << "test macro Debug";
+    SYLAR_LOG_INFO(logger) << "test macro Info";
+    SYLAR_LOG_WARN(logger) << "test macro Warn";
+    SYLAR_LOG_ERROR(logger) << "test macro Error";
+    SYLAR_LOG_FATAL(logger) << "test macro Fatal";
+    std::cout << "----------test_macro fmt begin----------" << std::endl;
+    SYLAR_LOG_FMT_DEBUG(logger, "test macro Debug %s", "aa");
+    SYLAR_LOG_FMT_INFO(logger, "test macro Info %s", "aa");
+    SYLAR_LOG_FMT_WARN(logger, "test macro Warn %s", "aa");
+    SYLAR_LOG_FMT_ERROR(logger, "test macro Error %s", "aa");
+    SYLAR_LOG_FMT_FATAL(logger, "test macro Fatal %s", "aa");
+}
+
+void test_loggerMgr() {
+    std::cout << "----------test_macro LoggerManager begin----------"
+              << std::endl;
+    SYLAR_LOG_INFO(SYLAR_LOG_ROOT()) << "LoggerManager test";
+    SYLAR_LOG_INFO(SYLAR_LOG_NAME("root")) << "LoggerManager test";
+}
+
+int main(int argc, char **argv) {
+    // test_stdLog();
+    // test_macro();
+    // test_loggerMgr();
 }

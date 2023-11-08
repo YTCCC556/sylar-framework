@@ -192,7 +192,7 @@ const char *LogLevel::Tostring(LogLevel::Level level) {
         default:
             return "UNKNOWN";
     }
-    return "UBKNOW";
+    return "UNKNOWN";
 }
 
 LogLevel::Level LogLevel::FromString(const std::string &str) {
@@ -210,7 +210,7 @@ LogLevel::Level LogLevel::FromString(const std::string &str) {
     XX(WARN, WARN);
     XX(ERROR, ERROR);
     XX(FATAL, FATAL);
-    return LogLevel::UNKNOW;
+    return LogLevel::UNKNOWN;
 
 #undef XX
 }
@@ -364,13 +364,13 @@ void StdoutLogAppender::log(std::shared_ptr<Logger> logger,
                             LogLevel::Level level, LogEvent::ptr event) {
     if (level >= m_level) {
         std::string str = m_formatter->format(logger, level, event);
-        //        std::cout << str << std::endl;
+        std::cout << str << std::endl;
     }
 }
 std::string StdoutLogAppender::toYamlString() {
     YAML::Node node;
     node["type"] = "StdoutLogAppender";
-    if (m_level != LogLevel::UNKNOW)
+    if (m_level != LogLevel::UNKNOWN)
         node["level"] = LogLevel::Tostring(m_level);
     if (m_formatter && m_hasFormatter) {
         node["formatter"] = m_formatter->getPattern();
@@ -398,7 +398,7 @@ std::string FileLogAppender::toYamlString() {
     YAML::Node node;
     node["type"] = "FileLogAppender";
     node["file"] = m_filename;
-    if (m_level != LogLevel::UNKNOW)
+    if (m_level != LogLevel::UNKNOWN)
         node["level"] = LogLevel::Tostring(m_level);
     if (m_formatter && m_hasFormatter) {
         node["formatter"] = m_formatter->getPattern();
@@ -412,10 +412,10 @@ std::string FileLogAppender::toYamlString() {
 Logger::Logger(const std::string name)
     : m_name(name), m_level(LogLevel::DEBUG) {
     m_formatter.reset(new LogFormatter(
-            "%d{%Y-%m-%d %H:%M:%S}%T%t%T%N%T%F%T[%p]%T[%c]%T%f:%l%T%m%n"));
-    if (name == "root") {
-        m_appenders.push_back(LogAppender::ptr(new StdoutLogAppender));
-    }
+            "%d{%Y-%m-%d %H:%M:%S}%T%t%T%N%T%F%T[%p]%T[%c]%T%f:%l%T%m"));
+    // if (name == "root") {
+    //     m_appenders.push_back(LogAppender::ptr(new StdoutLogAppender));
+    // }
 }
 
 void Logger::log(LogLevel::Level level, LogEvent::ptr event) {
@@ -472,7 +472,7 @@ LogFormatter::ptr Logger::getFormatter() { return m_formatter; }
 std::string Logger::toYamlString() {
     YAML::Node node;
     node["name"] = m_name;
-    if (m_level != LogLevel::UNKNOW)
+    if (m_level != LogLevel::UNKNOWN)
         node["level"] = LogLevel::Tostring(m_level);
     if (m_formatter) { node["formatter"] = m_formatter->getPattern(); }
     for (auto &i: m_appenders) {
@@ -520,7 +520,7 @@ void LoggerManager::init() {}
 
 struct LogAppenderDefine {
     int type = 0;// 1 File 2 Stdout
-    LogLevel::Level level = LogLevel::UNKNOW;
+    LogLevel::Level level = LogLevel::UNKNOWN;
     std::string formatter;
     std::string file;
 
@@ -532,7 +532,7 @@ struct LogAppenderDefine {
 
 struct LogDefine {
     std::string name;
-    LogLevel::Level level = LogLevel::UNKNOW;
+    LogLevel::Level level = LogLevel::UNKNOWN;
     std::string formatter;
     std::vector<LogAppenderDefine> appenders;
 
@@ -605,7 +605,7 @@ public:
     std::string operator()(const LogDefine &i) {
         YAML::Node n;
         n["name"] = i.name;
-        if (i.level != LogLevel::UNKNOW) {
+        if (i.level != LogLevel::UNKNOWN) {
             n["level"] = LogLevel::Tostring(i.level);
         }
         if (i.formatter.empty()) { n["formatter"] = i.formatter; }
@@ -618,7 +618,7 @@ public:
             } else if (a.type == 2) {
                 na["type"] = "StdoutLogAppender";
             }
-            if (a.level != LogLevel::UNKNOW) {
+            if (a.level != LogLevel::UNKNOWN) {
                 na["level"] = LogLevel::Tostring(a.level);
             }
 
