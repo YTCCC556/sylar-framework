@@ -53,13 +53,14 @@ public:
 template<class T>
 class LexicalCast<std::string, std::vector<T>> {
 public:
+    // 将string转换成vector
     std::vector<T> operator()(const std::string &v) {
         YAML::Node node = YAML::Load(v);
         typename std::vector<T> vec;
         std::stringstream ss;
-        for (size_t i = 0; i < node.size(); ++i) {
+        for (auto && i : node) {
             ss.str("");
-            ss << node[i];
+            ss << i;
             vec.push_back(LexicalCast<std::string, T>()(ss.str()));
         }
         return vec;
@@ -68,6 +69,7 @@ public:
 template<class T>
 class LexicalCast<std::vector<T>, std::string> {
 public:
+    // 将vector转换成string
     std::string operator()(const std::vector<T> &v) {
         YAML::Node node;
         for (auto &i: v) {

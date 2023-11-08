@@ -115,6 +115,7 @@ void test_config() {
 #undef XX_M
 #undef XX
 }
+
 class Person {
 public:
     std::string m_name;
@@ -132,6 +133,7 @@ public:
         return m_name == oth.m_name && m_age == oth.m_age && m_sex == oth.m_sex;
     };
 };
+
 namespace ytccc {
 //自定义偏特化
 template<>
@@ -221,10 +223,10 @@ int main(int argc, char **argv) {
     //    SYLAR_LOG_INFO(SYLAR_LOG_ROOT()) << g_int_value_config->getValue();
     //    SYLAR_LOG_INFO(SYLAR_LOG_ROOT()) << g_int_value_config->toString();
 
-    //    test_yaml();
+    test_yaml();
     //    test_config();
     //    test_class();
-    test_log();
+    // test_log();
 
     return 0;
 }
