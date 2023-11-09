@@ -210,9 +210,9 @@ void test_log() {
     std::cout << ytccc::LoggerMgr::GetInstance()->toYamlString() << std::endl;
     YAML::Node root = YAML::LoadFile("../bin/conf/log.yml");
     ytccc::Config::LoadFromYaml(root);
-    std::cout << "===========" << std::endl;
+    std::cout << "============================" << std::endl;
     std::cout << ytccc::LoggerMgr::GetInstance()->toYamlString() << std::endl;
-    std::cout << "===========" << std::endl;
+    std::cout << "============================" << std::endl;
     std::cout << root << std::endl;
 
     system_log->setFormatter("%d - %m%n");

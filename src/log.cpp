@@ -608,7 +608,7 @@ public:
         if (i.level != LogLevel::UNKNOWN) {
             n["level"] = LogLevel::Tostring(i.level);
         }
-        if (i.formatter.empty()) { n["formatter"] = i.formatter; }
+        if (!i.formatter.empty()) { n["formatter"] = i.formatter; }
 
         for (auto &a: i.appenders) {
             YAML::Node na;
