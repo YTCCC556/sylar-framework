@@ -389,15 +389,22 @@ std::string StdoutLogAppender::toYamlString() {
 }
 
 FileLogAppender::FileLogAppender(const std::string &filename)
-    : m_filename(filename) {}
+    : m_filename(filename) {
+    reopen();
+}
 
 void FileLogAppender::log(std::shared_ptr<Logger> logger, LogLevel::Level level,
                           LogEvent::ptr event) {
     if (level >= m_level) {
+        reopen();
         MutexType::Lock lock(m_mutex);
-        std::string str = m_formatter->format(logger, level, event);
-        std::cout << str << std::endl;
-        m_filestream << str;
+        // uint64_t now = event->getTime();
+        // if (now >= (m_lastTime + 3)) {
+        //     reopen();
+        //     m_lastTime = now;
+        // }
+
+        m_filestream << m_formatter->format(logger, level, event);;
     }
 }
 bool FileLogAppender::reopen() {
@@ -663,8 +670,8 @@ struct LogIniter {
         g_log_defines->addListener(
                 0xF1E241, [](const std::set<LogDefine> &old_value,
                              const std::set<LogDefine> &new_value) {
-                    SYLAR_LOG_INFO(SYLAR_LOG_ROOT())
-                            << "on_logger_conf_changed";
+                    // SYLAR_LOG_INFO(SYLAR_LOG_ROOT())
+                    //         << "on_logger_conf_changed";
                     //新增
                     for (auto &i: new_value) {
                         auto it = old_value.find(i);

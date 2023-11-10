@@ -6,8 +6,8 @@
 #define CLIONPROJECT_LOG_H
 
 #include "singleton.h"
-#include "util.h"
 #include "thread.h"
+#include "util.h"
 #include <fstream>
 #include <list>
 #include <map>
@@ -71,7 +71,7 @@ class LoggerManager;
 class LogLevel {
 public:
     enum Level {
-        UNKNOWN =0,
+        UNKNOWN = 0,
         DEBUG = 1,
         INFO = 2,
         WARN = 3,
@@ -79,7 +79,7 @@ public:
         FATAL = 5,
     };
     static const char *Tostring(LogLevel::Level level);
-    static LogLevel::Level FromString(const std::string& str);
+    static LogLevel::Level FromString(const std::string &str);
 
 private:
 };
@@ -147,7 +147,7 @@ public:
                        LogEvent::ptr event);
     void init();
     bool isError() const { return m_error; }
-    const std::string getPattern() const {return m_pattern;}
+    const std::string getPattern() const { return m_pattern; }
 
 public:
     class FormatItem {
@@ -159,7 +159,7 @@ public:
     };
 
 private:
-    std::string m_pattern; // 日志格式
+    std::string m_pattern;// 日志格式
     std::vector<FormatItem::ptr> m_items;
     bool m_error = false;
 };
@@ -167,6 +167,7 @@ private:
 // 日志输出地
 class LogAppender {
     friend class Logger;
+
 public:
     typedef std::shared_ptr<LogAppender> ptr;
     typedef YTC_LOCK MutexType;
@@ -196,6 +197,7 @@ public:
     void log(std::shared_ptr<Logger> logger, LogLevel::Level level,
              LogEvent::ptr event) override;
     std::string toYamlString() override;
+
 private:
 };
 
@@ -208,9 +210,11 @@ public:
              LogEvent::ptr event) override;
     bool reopen();
     std::string toYamlString() override;
+
 private:
     std::string m_filename;
     std::ofstream m_filestream;
+    uint64_t m_lastTime = 0;
 };
 
 //日志器
@@ -262,6 +266,7 @@ public:
 
     Logger::ptr getRoot() const { return m_root; }
     std::string toYamlString();
+
 private:
     MutexType m_mutex;
     std::map<std::string, Logger::ptr> m_logger;

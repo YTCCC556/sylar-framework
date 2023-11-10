@@ -1,9 +1,9 @@
 //
 // Created by YTCCC on 2023/11/9.
 //
+#include "config.h"
 #include "log.h"
 #include "thread.h"
-#include "config.h"
 
 ytccc::Logger::ptr g_logger = SYLAR_LOG_ROOT();
 ytccc::RWMutex s_mutex;
@@ -58,10 +58,12 @@ void test_thread2() {
 }
 
 void fun3() {
+    // SYLAR_LOG_INFO(g_logger) << std::string(2, 'x');
     while (true) SYLAR_LOG_INFO(g_logger) << std::string(2, 'x');
 }
 
 void fun4() {
+    // SYLAR_LOG_INFO(g_logger) << std::string(2, '=');
     while (true) SYLAR_LOG_INFO(g_logger) << std::string(2, '=');
 }
 
@@ -78,14 +80,11 @@ void test_thread3() {
         thrs.push_back(thr);
         thrs.push_back(thr2);
     }
-    for (auto & thr : thrs) {
-        thr->join();
-    }
-
+    for (auto &thr: thrs) { thr->join(); }
 }
 
-#include <iostream>
 #include <fstream>
+#include <iostream>
 
 int test_open() {
     // 打开文件
