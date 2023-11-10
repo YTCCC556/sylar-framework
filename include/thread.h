@@ -5,6 +5,7 @@
 #ifndef SYLAR_FRAMEWORK_THREAD_H
 #define SYLAR_FRAMEWORK_THREAD_H
 
+#include <atomic>
 #include <functional>
 #include <memory>
 #include <pthread.h>
@@ -180,6 +181,27 @@ private:
     pthread_spinlock_t m_mutex;
 };
 
+// 提升性能2.0
+class CASLock {
+public:
+    typedef ScopedLockImpl<CASLock> Lock;
+    CASLock() { m_mutex.clear(); }
+    ~CASLock() {}
+
+    void lock() {
+        while (std::atomic_flag_test_and_set_explicit(
+                &m_mutex, std::memory_order_acquire))
+            ;
+    }
+
+    void unlock() {
+        std::atomic_flag_clear_explicit(&m_mutex, std::memory_order_acquire);
+    }
+
+private:
+    volatile std::atomic_flag m_mutex;
+};
+
 class Thread {
 public:
     typedef std::shared_ptr<Thread> ptr;
@@ -210,7 +232,6 @@ private:
 
     Semaphore m_semaphore;
 };
-
 
 }// namespace ytccc
 

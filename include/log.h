@@ -61,7 +61,7 @@
 
 
 #define YTC_LOCK SpinLock
-
+// #define YTC_LOCK CASLock
 namespace ytccc {
 
 class Logger;

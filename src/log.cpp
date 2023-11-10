@@ -396,15 +396,17 @@ FileLogAppender::FileLogAppender(const std::string &filename)
 void FileLogAppender::log(std::shared_ptr<Logger> logger, LogLevel::Level level,
                           LogEvent::ptr event) {
     if (level >= m_level) {
-        reopen();
+        // 防止程序运行过程中日志文件被删除
+        uint64_t now = event->getTime();
+        if (now >= (m_lastTime + 3)) {
+            reopen();
+            m_lastTime = now;
+        }
         MutexType::Lock lock(m_mutex);
-        // uint64_t now = event->getTime();
-        // if (now >= (m_lastTime + 3)) {
-        //     reopen();
-        //     m_lastTime = now;
-        // }
+        if(m_filestream << m_formatter->format(logger, level, event)){
+            std::cout <<"Error FileLogAppender::log";
+        }
 
-        m_filestream << m_formatter->format(logger, level, event);;
     }
 }
 bool FileLogAppender::reopen() {
