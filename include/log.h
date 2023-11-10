@@ -7,6 +7,7 @@
 
 #include "singleton.h"
 #include "util.h"
+#include "thread.h"
 #include <fstream>
 #include <list>
 #include <map>
@@ -57,6 +58,9 @@
 
 #define SYLAR_LOG_ROOT() ytccc::LoggerMgr::GetInstance()->getRoot()
 #define SYLAR_LOG_NAME(name) ytccc::LoggerMgr::GetInstance()->getLogger(name)
+
+
+#define YTC_LOCK SpinLock
 
 namespace ytccc {
 
@@ -165,6 +169,7 @@ class LogAppender {
     friend class Logger;
 public:
     typedef std::shared_ptr<LogAppender> ptr;
+    typedef YTC_LOCK MutexType;
     virtual ~LogAppender() {}
 
     virtual void log(std::shared_ptr<Logger> logger, LogLevel::Level level,
@@ -173,13 +178,14 @@ public:
     virtual std::string toYamlString() = 0;
 
     void setFormatter(LogFormatter::ptr val);
-    LogFormatter::ptr getFormatter() const { return m_formatter; }
+    LogFormatter::ptr getFormatter();
     void setLevel(LogLevel::Level level) { m_level = level; }
     LogLevel::Level getLevel() const { return m_level; }
 
 protected:
-    LogLevel::Level m_level;
+    LogLevel::Level m_level = LogLevel::DEBUG;
     bool m_hasFormatter = false;
+    MutexType m_mutex;
     LogFormatter::ptr m_formatter;// 定义输出格式
 };
 
@@ -213,7 +219,7 @@ class Logger : public std::enable_shared_from_this<Logger> {
 
 public:
     typedef std::shared_ptr<Logger> ptr;
-
+    typedef YTC_LOCK MutexType;
 
     Logger(std::string name = "root");
     void log(LogLevel::Level level, LogEvent::ptr event);
@@ -244,10 +250,12 @@ private:
     std::list<LogAppender::ptr> m_appenders;//Appender集合
     LogFormatter::ptr m_formatter;
     Logger::ptr m_root;
+    MutexType m_mutex;
 };
 
 class LoggerManager {
 public:
+    typedef YTC_LOCK MutexType;
     LoggerManager();
     Logger::ptr getLogger(const std::string &name);
     void init();
@@ -255,6 +263,7 @@ public:
     Logger::ptr getRoot() const { return m_root; }
     std::string toYamlString();
 private:
+    MutexType m_mutex;
     std::map<std::string, Logger::ptr> m_logger;
     Logger::ptr m_root;
 };

@@ -111,5 +111,5 @@ void test_loggerMgr() {
 int main(int argc, char **argv) {
     // test_stdLog();
     // test_macro();
-    // test_loggerMgr();
+    test_loggerMgr();
 }

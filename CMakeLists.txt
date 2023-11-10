@@ -18,9 +18,10 @@ if (Boost_FOUND)
 endif ()
 
 set(LIB_SRC
-        src/log.cpp
-        src/util.cpp
-        src/config.cpp
+    src/log.cpp
+    src/util.cpp
+    src/config.cpp
+    src/thread.cpp
 )
 
 add_library(framework SHARED ${LIB_SRC})
