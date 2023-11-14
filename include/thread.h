@@ -15,7 +15,17 @@
 
 namespace ytccc {
 
-class Semaphore {
+
+class Noncopyable {
+public:
+    Noncopyable() = default;
+    ~Noncopyable() = default;
+    Noncopyable(const Noncopyable &) = delete;
+    Noncopyable &operator=(const Noncopyable &) = delete;
+};
+
+// 信号量封装类
+class Semaphore : Noncopyable {
 public:
     Semaphore(uint32_t count = 0);
     ~Semaphore();
@@ -24,14 +34,10 @@ public:
     void notify();
 
 private:
-    Semaphore(const Semaphore &) = delete;           // 删除拷贝构造函数
-    Semaphore(const Semaphore &&) = delete;          // 删除移动构造函数
-    Semaphore &operator=(const Semaphore &) = delete;//删除拷贝赋值运算符
-
-private:
     sem_t m_semaphore;
 };
-
+// 局部锁的模板实现，写这个模版的目的是实现RAII机制，
+// RAII机制（构造时获取资源，在生命周期内控制对资源的访问，在对象析构时释放资源。）
 template<class T>
 struct ScopedLockImpl {
 public:
@@ -92,7 +98,7 @@ template<class T>
 struct WriteScopeLockImpl {
 public:
     WriteScopeLockImpl(T &mutex) : m_mutex(mutex) {
-        m_mutex.wrlock();// TODO lock方法是什么
+        m_mutex.wrlock();
         m_locked = true;
     }
     ~WriteScopeLockImpl() { unlock(); }
@@ -115,7 +121,8 @@ private:
     bool m_locked;
 };
 
-class Mutex {
+// 互斥量封装类
+class Mutex : Noncopyable {
 public:
     typedef ScopedLockImpl<Mutex> Lock;
     Mutex() { pthread_mutex_init(&m_mutex, nullptr); }
@@ -127,7 +134,7 @@ private:
     pthread_mutex_t m_mutex;
 };
 
-class NullMutex {
+class NullMutex : Noncopyable {
 public:
     typedef ScopedLockImpl<NullMutex> Lock;
     NullMutex() {}
@@ -137,8 +144,8 @@ public:
 
 private:
 };
-
-class RWMutex {
+// 读写互斥量封装类
+class RWMutex : Noncopyable {
     // 分读写锁
 public:
     typedef ReadScopeLockImpl<RWMutex> ReadLock;
@@ -155,7 +162,7 @@ private:
     pthread_rwlock_t m_lock;
 };
 
-class NullRWMutes {
+class NullRWMutes : Noncopyable {
 public:
     typedef ReadScopeLockImpl<NullRWMutes> ReadLock;
     typedef WriteScopeLockImpl<NullRWMutes> WriteLock;
@@ -167,8 +174,8 @@ public:
     void unlock() {}
 };
 
-// 提升性能
-class SpinLock {
+// 提升性能 自旋锁封装类
+class SpinLock : Noncopyable {
 public:
     typedef ScopedLockImpl<SpinLock> Lock;
     SpinLock() { pthread_spin_init(&m_mutex, 0); }
@@ -181,8 +188,8 @@ private:
     pthread_spinlock_t m_mutex;
 };
 
-// 提升性能2.0
-class CASLock {
+// 提升性能2.0 原子锁封装类
+class CASLock : Noncopyable {
 public:
     typedef ScopedLockImpl<CASLock> Lock;
     CASLock() { m_mutex.clear(); }
@@ -202,11 +209,12 @@ private:
     volatile std::atomic_flag m_mutex;
 };
 
-class Thread {
+class Thread : Noncopyable {
 public:
     typedef std::shared_ptr<Thread> ptr;
-    Thread(std::function<void()> cb, const std::string &name);
-    ~Thread();
+    Thread(std::function<void()> cb, const std::string &name);// 创建
+    ~Thread();                                                // 删除
+
     pid_t getId() const { return m_id; }
     const std::string &getName() const { return m_name; }
 
@@ -217,12 +225,6 @@ public:
     static const std::string &GetName();
     static void SetName(const std::string &name);
     static void *run(void *arg);
-
-private:
-    //防止复制？
-    Thread(const Thread &) = delete;           // 删除拷贝构造函数
-    Thread(const Thread &&) = delete;          // 删除移动构造函数
-    Thread &operator=(const Thread &) = delete;// 删除拷贝赋值运算符
 
 private:
     pid_t m_id = -1;

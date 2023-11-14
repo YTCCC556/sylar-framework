@@ -403,10 +403,9 @@ void FileLogAppender::log(std::shared_ptr<Logger> logger, LogLevel::Level level,
             m_lastTime = now;
         }
         MutexType::Lock lock(m_mutex);
-        if(m_filestream << m_formatter->format(logger, level, event)){
-            std::cout <<"Error FileLogAppender::log";
+        if (m_filestream << m_formatter->format(logger, level, event)) {
+            std::cout << "Error FileLogAppender::log";
         }
-
     }
 }
 bool FileLogAppender::reopen() {
@@ -669,66 +668,64 @@ ytccc::ConfigVar<std::set<LogDefine>>::ptr g_log_defines =
 
 struct LogIniter {
     LogIniter() {
-        g_log_defines->addListener(
-                0xF1E241, [](const std::set<LogDefine> &old_value,
-                             const std::set<LogDefine> &new_value) {
-                    // SYLAR_LOG_INFO(SYLAR_LOG_ROOT())
-                    //         << "on_logger_conf_changed";
-                    //新增
-                    for (auto &i: new_value) {
-                        auto it = old_value.find(i);
-                        ytccc::Logger::ptr logger;
-                        if (it == old_value.end()) {
-                            //新中有，老中没有，
-                            //logger.reset(new ytccc::Logger(i.name));
-                            logger = SYLAR_LOG_NAME(i.name);
+        g_log_defines->addListener([](const std::set<LogDefine> &old_value,
+                                      const std::set<LogDefine> &new_value) {
+            // SYLAR_LOG_INFO(SYLAR_LOG_ROOT())
+            //         << "on_logger_conf_changed";
+            //新增
+            for (auto &i: new_value) {
+                auto it = old_value.find(i);
+                ytccc::Logger::ptr logger;
+                if (it == old_value.end()) {
+                    //新中有，老中没有，
+                    //logger.reset(new ytccc::Logger(i.name));
+                    logger = SYLAR_LOG_NAME(i.name);
+                } else {
+                    //新老中都有
+                    if (!(i == *it)) {
+                        // 不相同，修改
+                        logger = SYLAR_LOG_NAME(i.name);
+                    } else {
+                        continue;
+                    }
+                }
+                logger->setLevel(i.level);
+                if (!i.formatter.empty()) {// formatter不空
+                    logger->setFormatter(i.formatter);
+                }
+                logger->clearAppender();
+                for (auto &a: i.appenders) {
+                    ytccc::LogAppender::ptr ap;
+                    if (a.type == 1) {
+                        ap.reset(new FileLogAppender(a.file));
+                    } else if (a.type == 2) {
+                        ap.reset(new StdoutLogAppender);
+                    }
+                    ap->setLevel(a.level);
+                    if (!a.formatter.empty()) {
+                        LogFormatter::ptr fmt(new LogFormatter(a.formatter));
+                        if (!fmt->isError()) {
+                            ap->setFormatter(fmt);
                         } else {
-                            //新老中都有
-                            if (!(i == *it)) {
-                                // 不相同，修改
-                                logger = SYLAR_LOG_NAME(i.name);
-                            } else {
-                                continue;
-                            }
-                        }
-                        logger->setLevel(i.level);
-                        if (!i.formatter.empty()) {// formatter不空
-                            logger->setFormatter(i.formatter);
-                        }
-                        logger->clearAppender();
-                        for (auto &a: i.appenders) {
-                            ytccc::LogAppender::ptr ap;
-                            if (a.type == 1) {
-                                ap.reset(new FileLogAppender(a.file));
-                            } else if (a.type == 2) {
-                                ap.reset(new StdoutLogAppender);
-                            }
-                            ap->setLevel(a.level);
-                            if (!a.formatter.empty()) {
-                                LogFormatter::ptr fmt(
-                                        new LogFormatter(a.formatter));
-                                if (!fmt->isError()) {
-                                    ap->setFormatter(fmt);
-                                } else {
-                                    std::cout << "log.name=" << i.name
-                                              << " appender type=" << a.type
-                                              << " formatter=" << a.formatter
-                                              << " is invalid" << std::endl;
-                                }
-                            }
-                            logger->addAppender(ap);
+                            std::cout << "log.name=" << i.name
+                                      << " appender type=" << a.type
+                                      << " formatter=" << a.formatter
+                                      << " is invalid" << std::endl;
                         }
                     }
-                    for (auto &i: old_value) {
-                        auto it = new_value.find(i);
-                        if (it == new_value.end()) {
-                            //新中没有，老中没有，删除，并不真正删除
-                            auto logger = SYLAR_LOG_NAME(i.name);
-                            logger->setLevel((LogLevel::Level) 100);
-                            logger->clearAppender();
-                        }
-                    }
-                });
+                    logger->addAppender(ap);
+                }
+            }
+            for (auto &i: old_value) {
+                auto it = new_value.find(i);
+                if (it == new_value.end()) {
+                    //新中没有，老中没有，删除，并不真正删除
+                    auto logger = SYLAR_LOG_NAME(i.name);
+                    logger->setLevel((LogLevel::Level) 100);
+                    logger->clearAppender();
+                }
+            }
+        });
     }
 };
 static LogIniter __Log_init;

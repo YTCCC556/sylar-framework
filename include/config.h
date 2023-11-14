@@ -5,7 +5,9 @@
 #ifndef SYLAR_FRAMEWORK_CONFIG_H
 #define SYLAR_FRAMEWORK_CONFIG_H
 
+
 #include "log.h"
+#include "thread.h"
 #include <boost/lexical_cast.hpp>
 #include <memory>
 #include <sstream>
@@ -20,6 +22,8 @@
 #include <unordered_set>
 #include <vector>
 namespace ytccc {
+
+#define YTC_LOCK_CONFIG RWMutex;
 
 class ConfigVarBase {
 public:
@@ -58,7 +62,7 @@ public:
         YAML::Node node = YAML::Load(v);
         typename std::vector<T> vec;
         std::stringstream ss;
-        for (auto && i : node) {
+        for (auto &&i: node) {
             ss.str("");
             ss << i;
             vec.push_back(LexicalCast<std::string, T>()(ss.str()));
@@ -239,6 +243,7 @@ template<class T, class FromStr = LexicalCast<std::string, T>,
          class ToStr = LexicalCast<T, std::string>>
 class ConfigVar : public ConfigVarBase {
 public:
+    typedef RWMutex MutexType;
     typedef std::shared_ptr<ConfigVar> ptr;
     typedef std::function<void(const T &old_value, const T &new_value)>
             on_change_cb;
@@ -250,6 +255,7 @@ public:
     std::string toString() override {
         try {
             //return boost::lexical_cast<std::string>(m_val);
+            MutexType::ReadLock lock(m_mutex);
             return ToStr()(m_val);
         } catch (std::exception &e) {
             SYLAR_LOG_ERROR(SYLAR_LOG_ROOT())
@@ -262,6 +268,7 @@ public:
     bool fromString(const std::string &val) override {
         try {
             //            m_val = boost::lexical_cast<T>(val);
+
             setValue(FromStr()(val));
         } catch (std::exception &e) {
             SYLAR_LOG_ERROR(SYLAR_LOG_ROOT())
@@ -272,22 +279,44 @@ public:
     }
 
     std::string getTypeName() const override { return typeid(T).name(); }
-    const T getValue() const { return m_val; }
+    const T getValue(){
+        MutexType::ReadLock lock(m_mutex);
+        return m_val;
+    }
     void setValue(const T &v) {
-        if (v == m_val) { return; }
-        for (auto &i: m_cbs) { i.second(m_val, v); }
+        {
+            MutexType::ReadLock lock(m_mutex);
+            if (v == m_val) return;
+            for (auto &i: m_cbs) i.second(m_val, v);
+        }
+        MutexType::WriteLock lock(m_mutex);
         m_val = v;
     }
 
-    void addListener(uint64_t key, on_change_cb cb) { m_cbs[key] = cb; }
-    void delListener(uint64_t key) { m_cbs.erase(key); }
+    uint64_t addListener(on_change_cb cb) {
+        static uint64_t s_fun_id = 0;
+
+        MutexType::WriteLock lock(m_mutex);
+        ++s_fun_id;
+        m_cbs[s_fun_id] = cb;
+        return s_fun_id;
+    }
+    void delListener(uint64_t key) {
+        MutexType::WriteLock lock(m_mutex);
+        m_cbs.erase(key);
+    }
     on_change_cb getListener(uint64_t key) {
+        MutexType::ReadLock lock(m_mutex);
         auto it = m_cbs.find(key);
         return it == m_cbs.end() ? nullptr : it->second;
     }
-    void clearListener() { m_cbs.clear(); }
+    void clearListener() {
+        MutexType::WriteLock lock(m_mutex);
+        m_cbs.clear();
+    }
 
 private:
+    MutexType m_mutex;
     T m_val;
     //变更回调函数组，functional没有比较函数，
     std::map<uint64_t, on_change_cb> m_cbs;
@@ -295,6 +324,8 @@ private:
 
 class Config {
 public:
+
+    typedef RWMutex MutexType;
     typedef std::map<std::string, ConfigVarBase::ptr> ConfigVarMap;
 
     template<class T>
@@ -303,6 +334,8 @@ public:
     // 配置参数名称，T类型的参数默认值，字符串形式的参数描述
     Lookup(const std::string &name, const T &default_value,
            const std::string &description = "") {
+        //typedef WriteScopeLockImpl<RWMutex> WriteLock;
+        MutexType::WriteLock lock(GetMutex());
         auto it = GetDatas().find(name);
         // 在map中找到相同名称的配置项
         if (it != GetDatas().end()) {
@@ -339,6 +372,7 @@ public:
     // 查找配置参数，传入配置参数名称，返回对应的配置参数，若不存在或者类型错误的话，都会返回nullptr
     template<class T>
     static typename ConfigVar<T>::ptr Lookup(const std::string &name) {
+        MutexType::ReadLock lock(GetMutex());
         auto it = GetDatas().find(name);
         if (it == GetDatas().end()) { return nullptr; }
         return std::dynamic_pointer_cast<ConfigVar<T>>(it->second);
@@ -348,14 +382,21 @@ public:
     // 返回基类指针
     static ConfigVarBase::ptr LookupBase(const std::string &name);
 
+    //为了调试方便，返回整个map内容
+    static void Visit(const std::function<void(ConfigVarBase::ptr)>& cb);
 private:
     static ConfigVarMap &GetDatas() {
         static ConfigVarMap m_datas;
         return m_datas;
     }
+    // 静态成员初始化顺序要比其他的晚，会出现问题，内存错误
+    static MutexType &GetMutex() {
+        static MutexType m_mutex;
+        return m_mutex;
+    }
 };
 
-
+#undef YTC_LOCK_CONFIG
 }// namespace ytccc
 
 

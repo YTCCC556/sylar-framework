@@ -276,6 +276,6 @@ private:
 typedef ytccc::Singleton<LoggerManager> LoggerMgr;
 
 };// namespace ytccc
-
+#undef YTC_LOCK
 
 #endif//CLIONPROJECT_LOG_H

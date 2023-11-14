@@ -189,6 +189,11 @@ void test_class() {
                 << #prefix << " : size = " << m.size();                        \
     }
 
+    g_person->addListener([](const Person &oldValue, const Person &newValue) {
+        SYLAR_LOG_INFO(SYLAR_LOG_ROOT()) << "old_value=" << oldValue.toString()
+                                         << "new_value=" << newValue.toString();
+    });
+
     XX_PM(g_person_map, before);
     SYLAR_LOG_INFO(SYLAR_LOG_ROOT())
             << "before vec map " << g_person_vec_map->toString();
@@ -219,15 +224,25 @@ void test_log() {
     SYLAR_LOG_INFO(system_log) << "hello system" << std::endl;
 }
 
+void test_visit() {
+    ytccc::Config::Visit([](ytccc::ConfigVarBase::ptr var) {
+        SYLAR_LOG_INFO(SYLAR_LOG_ROOT())
+                << " name=" << var->getName()
+                << " description=" << var->getDescription()
+                << " typename:" << var->getTypeName()
+                << " value=" << var->toString();
+    });
+}
+
 int main(int argc, char **argv) {
 
-    //    SYLAR_LOG_INFO(SYLAR_LOG_ROOT()) << g_int_value_config->getValue();
-    //    SYLAR_LOG_INFO(SYLAR_LOG_ROOT()) << g_int_value_config->toString();
+    // SYLAR_LOG_INFO(SYLAR_LOG_ROOT()) << g_int_value_config->getValue();
+    // SYLAR_LOG_INFO(SYLAR_LOG_ROOT()) << g_int_value_config->toString();
 
     // test_yaml();
-    //    test_config();
-    //    test_class();
-    test_log();
-
+    // test_config();
+    // test_class();
+    // test_log();
+    test_visit();
     return 0;
 }

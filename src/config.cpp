@@ -28,6 +28,7 @@ ListAllMember(const std::string &prefix, const YAML::Node &node,
 
 //查找当前项
 ConfigVarBase::ptr Config::LookupBase(const std::string &name) {
+    MutexType::ReadLock lock(GetMutex());
     auto it = GetDatas().find(name);
     return it == GetDatas().end() ? nullptr : it->second;
 }
@@ -52,6 +53,12 @@ void Config::LoadFromYaml(const YAML::Node &root) {
             }
         }
     }
+}
+
+void Config::Visit(const std::function<void(ConfigVarBase::ptr)>& cb) {
+    MutexType::ReadLock lock(GetMutex());
+    ConfigVarMap &m = GetDatas();
+    for (auto & it : m) { cb(it.second); }
 }
 
 }// namespace ytccc
