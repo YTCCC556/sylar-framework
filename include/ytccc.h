@@ -10,6 +10,7 @@
 #include "config.h"
 #include "singleton.h"
 #include "thread.h"
+#include "macro.h"
 
 
 #endif//SYLAR_FRAMEWORK_YTCCC_H

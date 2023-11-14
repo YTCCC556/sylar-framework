@@ -1,0 +1,7 @@
+logs:
+  - name: root
+    level: info
+    formatter: "%d{%Y-%m-%d %H:%M:%S} - %m%n"
+    appender:
+      - type: FileLogAppender
+        file: "test.txt"

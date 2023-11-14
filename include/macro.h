@@ -5,7 +5,8 @@
 #ifndef SYLAR_FRAMEWORK_MACRO_H
 #define SYLAR_FRAMEWORK_MACRO_H
 
-#include<string>
+#include <cassert>
+#include <string>
 
 
 
