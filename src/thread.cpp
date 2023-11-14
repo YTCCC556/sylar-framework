@@ -94,5 +94,6 @@ void *Thread::run(void *arg) {
     thread->m_semaphore.notify(); // 通知信号量，表示线程准备就绪
 
     cb(); // 执行回调函数
+    return 0;
 }
 }// namespace ytccc
