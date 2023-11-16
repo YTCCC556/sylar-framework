@@ -64,7 +64,7 @@ void test_stdLog() {
     ytccc::LogEvent::ptr event(new ytccc::LogEvent(
             logger, ytccc::LogLevel::DEBUG, __FILE__, __LINE__, 0,
             std::hash<std::thread::id>{}(std::this_thread::get_id()), 0,
-            time(0)));
+            time(0),ytccc::Thread::GetName()));
     logger->log(ytccc::LogLevel::DEBUG, event);
     // logger->log(ytc::LogLevel::ERROR, event);
 }
@@ -75,7 +75,7 @@ void test_fileLog() {
     ytccc::LogEvent::ptr event(new ytccc::LogEvent(
             logger, ytccc::LogLevel::DEBUG, __FILE__, __LINE__, 0,
             std::hash<std::thread::id>{}(std::this_thread::get_id()), 0,
-            time(0)));
+            time(0),ytccc::Thread::GetName()));
     ytccc::FileLogAppender::ptr fileLogAppender(
             new ytccc::FileLogAppender("../log/log.txt"));
     fileLogAppender->setLevel(ytccc::LogLevel::DEBUG);

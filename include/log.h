@@ -22,10 +22,10 @@
  代码块作用域，if for while创建的变量，只能在统一代码块内访问*/
 #define SYLAR_LOG_LEVEL(logger, level)                                         \
     if (logger->getLevel() <= level)                                           \
-    ytccc::LogEventWrap(                                                       \
-            ytccc::LogEvent::ptr(new ytccc::LogEvent(                          \
-                    logger, level, __FILE__, __LINE__, 0,                      \
-                    ytccc::GetThreadID(), ytccc::GetFiberID(), time(0))))      \
+    ytccc::LogEventWrap(ytccc::LogEvent::ptr(new ytccc::LogEvent(              \
+                                logger, level, __FILE__, __LINE__, 0,          \
+                                ytccc::GetThreadID(), ytccc::GetFiberID(),     \
+                                time(0), ytccc::Thread::GetName())))           \
             .getSS()
 
 #define SYLAR_LOG_DEBUG(logger) SYLAR_LOG_LEVEL(logger, ytccc::LogLevel::DEBUG)
@@ -37,10 +37,10 @@
 
 #define SYLAR_LOG_FMT_LEVEL(logger, level, fmt, ...)                           \
     if (logger->getLevel() <= level)                                           \
-    ytccc::LogEventWrap(                                                       \
-            ytccc::LogEvent::ptr(new ytccc::LogEvent(                          \
-                    logger, level, __FILE__, __LINE__, 0,                      \
-                    ytccc::GetThreadID(), ytccc::GetFiberID(), time(0))))      \
+    ytccc::LogEventWrap(ytccc::LogEvent::ptr(new ytccc::LogEvent(              \
+                                logger, level, __FILE__, __LINE__, 0,          \
+                                ytccc::GetThreadID(), ytccc::GetFiberID(),     \
+                                time(0), ytccc::Thread::GetName())))           \
             .getEvent()                                                        \
             ->format(fmt, __VA_ARGS__)
 
@@ -91,7 +91,8 @@ public:
 
     LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level,
              const char *m_file, int32_t m_line, uint32_t m_elapse,
-             uint32_t m_threadID, uint32_t m_fiberID, uint64_t m_time);
+             uint32_t m_threadID, uint32_t m_fiberID, uint64_t m_time,
+             const std::string &threadName);
     ~LogEvent();
 
     [[nodiscard]] const char *getFile() const { return m_file; }

@@ -12,12 +12,15 @@
 #include <sys/types.h>
 #include <vector>
 #include <zconf.h>
+
+
 namespace ytccc {
 
 pid_t GetThreadID();
 uint32_t GetFiberID();
 
 void Backtrace(std::vector<std::string> &bt, int size, int skip);
+// 返回当前栈的内容
 std::string BacktraceToString(int size, int skip = 1,
                               const std::string &prefix = "");
 

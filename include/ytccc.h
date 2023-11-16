@@ -11,6 +11,7 @@
 #include "singleton.h"
 #include "thread.h"
 #include "macro.h"
+#include "fiber.h"
 
 
 #endif//SYLAR_FRAMEWORK_YTCCC_H

@@ -69,6 +69,7 @@ public:
         os << event->getThreadID();
     }
 };
+
 class NewLineFormatItem : public LogFormatter::FormatItem {
 public:
     NewLineFormatItem(const std::string &str = "") {}
@@ -141,10 +142,11 @@ public:
 //LogEvent实现
 LogEvent::LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level,
                    const char *m_file, int32_t m_line, uint32_t m_elapse,
-                   uint32_t m_threadID, uint32_t m_fiberID, uint64_t m_time)
+                   uint32_t m_threadID, uint32_t m_fiberID, uint64_t m_time,
+                   const std::string &threadName)
     : m_logger(std::move(logger)), m_level(level), m_file(m_file),
       m_line(m_line), m_elapse(m_elapse), m_threadID(m_threadID),
-      m_fiberID(m_fiberID), m_time(m_time) {}
+      m_fiberID(m_fiberID), m_time(m_time), m_threadName(threadName) {}
 LogEvent::~LogEvent() {}
 
 

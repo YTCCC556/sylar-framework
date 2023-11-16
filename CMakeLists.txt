@@ -23,6 +23,7 @@ set(LIB_SRC
         src/config.cpp
         src/thread.cpp
         src/macro.cpp
+        src/fiber.cpp
 )
 
 add_library(framework SHARED ${LIB_SRC})
