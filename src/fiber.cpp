@@ -27,11 +27,12 @@ public:
     static void *Alloc(size_t size) { return malloc(size); }
     static void Dealloc(void *vp, size_t stacksize = 0) { return free(vp); }
 };
-using StackAllocator = MallocStackAllocator;
+using StackAllocator = MallocStackAllocator; // 为类型引入别名
 
 /*Fiber实现*/
 // 线程的主协程
 Fiber::Fiber() {
+    SYLAR_LOG_INFO(g_logger) << this->m_id<<" Fiber()";
     m_state = EXEC;
     SetThis(this);// 把自己放进去
     if (getcontext(&m_ctx)) { SYLAR_ASSERT2(false, "getcontext"); }
@@ -40,6 +41,7 @@ Fiber::Fiber() {
 // 创建新协程，创建栈空间
 Fiber::Fiber(std::function<void()> cb, size_t stacksize)
     : m_id(++s_fiber_id), m_cb(std::move(cb)) {
+    SYLAR_LOG_INFO(g_logger) << m_id<<" Fiber(...)";
     ++s_fiber_count;
     m_stacksize = stacksize ? stacksize : g_fiber_stack_size->getValue();
     m_stack = StackAllocator::Alloc(m_stacksize);// 根据大小分配内存
@@ -52,6 +54,7 @@ Fiber::Fiber(std::function<void()> cb, size_t stacksize)
 }
 // 协程结束后，回收内存
 Fiber::~Fiber() {
+    SYLAR_LOG_INFO(g_logger) << m_id<<" ~Fiber()";
     --s_fiber_count;
     if (m_stack) {
         // 状态不是TERM、INIT、EXCEPT(结束，初始化，一场)中的一个，报错

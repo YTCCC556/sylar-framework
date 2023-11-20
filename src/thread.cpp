@@ -51,7 +51,7 @@ Thread::Thread(std::function<void()> cb, const std::string &name)
     : m_cb(std::move(cb)), m_name(name) {
     if (name.empty())  m_name = "UNKNOWN";
     // 创建线程
-    int rt = pthread_create(&m_thread, nullptr, &Thread::run, this);
+    int rt = pthread_create(&m_thread, nullptr, &Thread::run, this);//这一步运行回调函数cb
     if (rt) {
         SYLAR_LOG_ERROR(g_logger) << "pthread_create thread fail,rt = " << rt
                                   << " name= " << name;
