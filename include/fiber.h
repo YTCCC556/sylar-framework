@@ -31,7 +31,8 @@ private:
     Fiber();
 
 public:
-    Fiber(std::function<void()> cb, size_t stacksize = 0);
+    Fiber(std::function<void()> cb, size_t stacksize = 0,
+          bool use_caller = false);
     ~Fiber();
 
     // 重置协程函数，并重置状态 init，TERM
@@ -40,7 +41,10 @@ public:
     void swapIn();
     // 结束执行，切换到后台，让出执行权
     void swapOut();
-
+    void call();
+    void back();
+    State getState() const { return m_state; }
+    void setState(Fiber::State state) { m_state = state; }
     uint64_t getID() const { return m_id; }
 
 public:
@@ -56,6 +60,7 @@ public:
     static uint64_t TotalFibers();
 
     static void MainFunc();
+    static void CallerMainFunc();
 
     static uint64_t GetFiberID();
 

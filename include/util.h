@@ -24,7 +24,7 @@ void Backtrace(std::vector<std::string> &bt, int size, int skip);
 std::string BacktraceToString(int size, int skip = 1,
                               const std::string &prefix = "");
 
-
+std::string GetRelative(std::string path);
 }// namespace ytccc
 
 

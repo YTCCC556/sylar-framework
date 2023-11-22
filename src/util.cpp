@@ -46,5 +46,16 @@ std::string BacktraceToString(int size, int skip, const std::string &prefix) {
     return ss.str();
 }
 
-
+std::string GetRelative(std::string path) {
+    std::istringstream iss(path);
+    std::string token;
+    std::stringstream ss;
+    ss << ".";
+    int i = 0;
+    while (std::getline(iss, token, '/')) {
+        if (i > 2) ss << "/" << token;
+        ++i;
+    }
+    return ss.str();
+}
 }// namespace ytccc
