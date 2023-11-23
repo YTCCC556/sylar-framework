@@ -22,10 +22,11 @@
  代码块作用域，if for while创建的变量，只能在统一代码块内访问*/
 #define SYLAR_LOG_LEVEL(logger, level)                                         \
     if (logger->getLevel() <= level)                                           \
-    ytccc::LogEventWrap(ytccc::LogEvent::ptr(new ytccc::LogEvent(              \
-                                logger, level, __FILE__, __LINE__, 0,          \
-                                ytccc::GetThreadID(), ytccc::GetFiberID(),     \
-                                time(0), ytccc::Thread::GetName())))           \
+    ytccc::LogEventWrap(                                                       \
+            ytccc::LogEvent::ptr(new ytccc::LogEvent(                          \
+                    logger, level, ytccc::GetRelative(__FILE__), __LINE__, 0,  \
+                    ytccc::GetThreadID(), ytccc::GetFiberID(), time(0),        \
+                    ytccc::Thread::GetName())))                                \
             .getSS()
 
 #define SYLAR_LOG_DEBUG(logger) SYLAR_LOG_LEVEL(logger, ytccc::LogLevel::DEBUG)
@@ -37,10 +38,11 @@
 
 #define SYLAR_LOG_FMT_LEVEL(logger, level, fmt, ...)                           \
     if (logger->getLevel() <= level)                                           \
-    ytccc::LogEventWrap(ytccc::LogEvent::ptr(new ytccc::LogEvent(              \
-                                logger, level, __FILE__, __LINE__, 0,          \
-                                ytccc::GetThreadID(), ytccc::GetFiberID(),     \
-                                time(0), ytccc::Thread::GetName())))           \
+    ytccc::LogEventWrap(                                                       \
+            ytccc::LogEvent::ptr(new ytccc::LogEvent(                          \
+                    logger, level, ytccc::GetRelative(__FILE__), __LINE__, 0,  \
+                    ytccc::GetThreadID(), ytccc::GetFiberID(), time(0),        \
+                    ytccc::Thread::GetName())))                                \
             .getEvent()                                                        \
             ->format(fmt, __VA_ARGS__)
 
@@ -92,10 +94,16 @@ public:
     LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level,
              const char *m_file, int32_t m_line, uint32_t m_elapse,
              uint32_t m_threadID, uint32_t m_fiberID, uint64_t m_time,
-             const std::string &threadName);
+             const std::string &threadName, bool filename_flag = true);
+    LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level,
+             std::string m_file_string, int32_t mLine, uint32_t mElapse,
+             uint32_t mThreadId, uint32_t mFiberId, uint64_t mTime,
+             const std::string &threadName, bool filename_flag = false);
     ~LogEvent();
 
-    [[nodiscard]] const char *getFile() const { return m_file; }
+    const char *getFile() const { return m_file; }
+    std::string getMFileString() const { return m_file_string; }
+    bool getNameFlag() const { return filename_flag; }
     int32_t getLine() const { return m_line; }
     uint32_t getElapse() const { return m_elapse; }
     uint32_t getThreadID() const { return m_threadID; }
@@ -123,6 +131,9 @@ private:
 
     std::shared_ptr<Logger> m_logger;
     LogLevel::Level m_level;
+
+    std::string m_file_string;
+    bool filename_flag;
 };
 
 

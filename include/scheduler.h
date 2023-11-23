@@ -25,7 +25,7 @@ public:
     typedef Mutex MutexType;
 
     Scheduler(size_t threads = 1, bool use_caller = true,
-              const std::string &name =
+              std::string name =
                       "");// use_caller 是否将caller线程纳入线程调度器
     virtual ~Scheduler();
 

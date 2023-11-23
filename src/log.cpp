@@ -34,7 +34,11 @@ public:
     FilenameFormatItem(const std::string &str = "") {}
     void format(std::ostream &os, Logger::ptr logger, LogLevel::Level level,
                 LogEvent::ptr event) override {
-        os << event->getFile();
+        if (event->getNameFlag()) {
+            os << event->getFile();
+        } else {
+            os << event->getMFileString();
+        }
     }
 };
 class LineFormatItem : public LogFormatter::FormatItem {
@@ -143,10 +147,19 @@ public:
 LogEvent::LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level,
                    const char *m_file, int32_t m_line, uint32_t m_elapse,
                    uint32_t m_threadID, uint32_t m_fiberID, uint64_t m_time,
-                   const std::string &threadName)
+                   const std::string &threadName, bool filename_flag)
     : m_logger(std::move(logger)), m_level(level), m_file(m_file),
       m_line(m_line), m_elapse(m_elapse), m_threadID(m_threadID),
-      m_fiberID(m_fiberID), m_time(m_time), m_threadName(threadName) {}
+      m_fiberID(m_fiberID), m_time(m_time), m_threadName(threadName),
+      filename_flag(filename_flag) {}
+LogEvent::LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level,
+                   std::string m_file_string, int32_t mLine, uint32_t mElapse,
+                   uint32_t mThreadId, uint32_t mFiberId, uint64_t mTime,
+                   const std::string &threadName, bool filename_flag)
+    : m_logger(std::move(logger)), m_level(level), m_file_string(m_file_string),
+      m_line(mLine), m_elapse(mElapse), m_threadID(mThreadId),
+      m_fiberID(mFiberId), m_time(mTime), m_threadName(threadName),
+      filename_flag(filename_flag) {}
 LogEvent::~LogEvent() {}
 
 
