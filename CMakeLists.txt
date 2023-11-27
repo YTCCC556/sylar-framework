@@ -25,6 +25,7 @@ set(LIB_SRC
         src/macro.cpp
         src/fiber.cpp
         src/scheduler.cpp
+        src/iomanager.cpp
 )
 
 add_library(framework SHARED ${LIB_SRC})

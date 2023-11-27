@@ -24,9 +24,9 @@ public:
     typedef std::shared_ptr<Scheduler> ptr;
     typedef Mutex MutexType;
 
-    Scheduler(size_t threads = 1, bool use_caller = true,
-              std::string name =
-                      "");// use_caller 是否将caller线程纳入线程调度器
+    Scheduler(
+            size_t threads = 1, bool use_caller = true,
+            std::string name = "");// use_caller 是否将caller线程纳入线程调度器
     virtual ~Scheduler();
 
     const std::string &getName() const { return m_name; }
@@ -67,6 +67,8 @@ protected:
     virtual void idle();
     void run();
     void setThis();
+
+    bool hasIdleThreads() { return m_idleThreadCount > 0; }
 
 private:
     template<class FiberOrCb>
