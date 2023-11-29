@@ -97,9 +97,9 @@ void Fiber::swapIn() {
     SYLAR_ASSERT(m_state != EXEC);
     m_state = EXEC;
     // 存储当前协程的上下文，恢复this的上下文
-    SYLAR_LOG_INFO(g_logger)
-            << "from MainFiber(id=" << Scheduler::GetMainFiber()->m_id
-            << ") swap to this(id=" << this->m_id << ")";
+    // SYLAR_LOG_INFO(g_logger)
+    //         << "from MainFiber(id=" << Scheduler::GetMainFiber()->m_id
+    //         << ") swap to this(id=" << this->m_id << ")";
     if (swapcontext(&Scheduler::GetMainFiber()->m_ctx, &m_ctx)) {
         SYLAR_ASSERT2(false, "swap context");
     }
@@ -107,10 +107,10 @@ void Fiber::swapIn() {
 // 结束执行，切换到后台，让出执行权
 void Fiber::swapOut() {
     SetThis(Scheduler::GetMainFiber());
-    SYLAR_LOG_INFO(g_logger)
-            << "from this(id=" << this->m_id
-            << ") swap to GetMainFiber(id=" << Scheduler::GetMainFiber()->m_id
-            << ")";
+    // SYLAR_LOG_INFO(g_logger)
+    //         << "from this(id=" << this->m_id
+    //         << ") swap to GetMainFiber(id=" << Scheduler::GetMainFiber()->m_id
+    //         << ")";
     // SYLAR_LOG_INFO(g_logger) << "swap to t_scheduler_fiber->ctx";
     if (swapcontext(&m_ctx, &Scheduler::GetMainFiber()->m_ctx)) {
         SYLAR_ASSERT2(false, "swap context");
@@ -172,7 +172,7 @@ void Fiber::MainFunc() {
     Fiber::ptr cur = GetThis();//返回当前正在执行的协程
     SYLAR_ASSERT(cur);
     try {
-        SYLAR_LOG_INFO(g_logger) << "MainFunc cur->m_cb() id=" << cur->m_id;
+        SYLAR_LOG_INFO(g_logger) << "cur->m_cb() MainFunc id=" << cur->m_id;
         cur->m_cb();
         cur->m_cb = nullptr;
         cur->m_state = TERM;
@@ -197,7 +197,7 @@ void Fiber::CallerMainFunc() {
     SYLAR_ASSERT(cur);
     try {
         SYLAR_LOG_INFO(g_logger)
-                << "CallerMainFunc cur->m_cb() id=" << cur->m_id;
+                << "cur->m_cb() CallerMainFunc id=" << cur->m_id;
         cur->m_cb();        // 执行回调函数
         cur->m_cb = nullptr;// 清空回调函数
         cur->m_state = TERM;// 设置状态

@@ -157,7 +157,7 @@ void Scheduler::run() {
         // 协程 且状态不为TERM
         if (ft.fiber && (ft.fiber->getState() != Fiber::TERM &&
                          ft.fiber->getState() != Fiber::EXCEPT)) {
-            SYLAR_LOG_INFO(g_logger) << "fiber";
+            // SYLAR_LOG_INFO(g_logger) << "fiber";
             ft.fiber->swapIn();// 不是结束状态，唤醒运行
             --m_activeThreadCount;
             // SYLAR_LOG_INFO(g_logger) << ft.fiber->getID() << " ft.fiber end IN";
@@ -170,7 +170,7 @@ void Scheduler::run() {
             ft.reset();
         } else if (ft.cb) {
             // 如果是回调方法cb
-            SYLAR_LOG_INFO(g_logger) << "cb";
+            // SYLAR_LOG_INFO(g_logger) << "cb";
             if (cb_fiber) {
                 cb_fiber->reset(ft.cb);
             } else {// 空指针

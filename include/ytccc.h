@@ -13,6 +13,7 @@
 #include "singleton.h"
 #include "thread.h"
 #include "util.h"
+#include "iomanager.h"
 
 
 #endif//SYLAR_FRAMEWORK_YTCCC_H
