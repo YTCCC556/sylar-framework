@@ -30,7 +30,6 @@ public:
     virtual ~Scheduler();
 
     const std::string &getName() const { return m_name; }
-
     static Scheduler *GetThis();
     static Fiber *GetMainFiber();
 
@@ -77,12 +76,12 @@ private:
         // 新建任务，添加到任务队列
         FiberAndThread ft(fc, thread);
         if (ft.fiber || ft.cb) {
-            if (ft.fiber) {
-                SYLAR_LOG_INFO(g_logger)
-                        << ft.fiber->getID() << " fiber added to Task Queue";
-            } else {
-                SYLAR_LOG_INFO(g_logger) << "cb added to Task Queue";
-            }
+            // if (ft.fiber) {
+            //     SYLAR_LOG_INFO(g_logger)
+            //             << ft.fiber->getID() << " fiber added to Task Queue";
+            // } else {
+            //     SYLAR_LOG_INFO(g_logger) << "cb added to Task Queue";
+            // }
             m_fibers.push_back(ft);
         }
         return need_tickle;
@@ -92,7 +91,7 @@ private:
     struct FiberAndThread {
         Fiber::ptr fiber;
         std::function<void()> cb;
-        int thread;
+        int thread; // 猜测用于指定执行协程
 
         FiberAndThread(Fiber::ptr f, int thr)
             : fiber(std::move(f)), thread(thr) {}

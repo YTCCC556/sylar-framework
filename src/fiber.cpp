@@ -120,8 +120,8 @@ void Fiber::call() {
     SetThis(this);// 将this设为当前正在运行的协程
     m_state = EXEC;
     // 强行将当前协程转换成目标执行协程，恢复m_ctx中的上下文，将当前上下文存入t_threadFiber的m_ctx中
-    SYLAR_LOG_INFO(g_logger) << "from t_threadFiber(id=" << t_threadFiber->m_id
-                             << ") swap to this(id=" << this->m_id << ")";
+    // SYLAR_LOG_INFO(g_logger) << "from t_threadFiber(id=" << t_threadFiber->m_id
+    //                          << ") swap to this(id=" << this->m_id << ")";
     if (swapcontext(&t_threadFiber->m_ctx, &m_ctx)) {
         SYLAR_ASSERT2(false, "swap context");
     }
@@ -130,8 +130,8 @@ void Fiber::back() {
     // 跟swapout相同逻辑，但是没有判断
     SetThis(t_threadFiber.get());// 将主协程设为当前协程
     // 保存当前上下文到m_ctx中，将主协程的上下文调出
-    SYLAR_LOG_INFO(g_logger) << "from this(id=" << this->m_id
-                             << ") swap to t_threadFiber(id=" << t_threadFiber->m_id << ")";
+    // SYLAR_LOG_INFO(g_logger) << "from this(id=" << this->m_id
+    //                          << ") swap to t_threadFiber(id=" << t_threadFiber->m_id << ")";
     if (swapcontext(&m_ctx, &t_threadFiber->m_ctx)) {
         SYLAR_ASSERT2(false, "swap context");
     }

@@ -184,8 +184,8 @@ bool IOManager::cancelEvent(int fd, Event event) {
     int rt = epoll_ctl(m_epfd, op, fd, &epevent);
     if (rt) {
         SYLAR_LOG_ERROR(g_logger)
-                << "epoll_ctl(" << m_epfd << "," << op << "," << fd << ","
-                << epevent.events << "):" << rt << " (" << errno << ") ("
+                << "epoll_ctl(m_epfd=" << m_epfd << " ,op=" << op << " ,fd=" << fd << ", epevent.events="
+                << epevent.events << ") rt:" << rt << " (errno:" << errno << ") ("
                 << strerror(errno) << ")";
         return false;
     }

@@ -24,17 +24,20 @@ Scheduler::Scheduler(size_t threads, bool use_caller, std::string name)
         ytccc::Thread::SetName(m_name);
 
         t_scheduler_fiber = m_rootFiber.get();// 调度协程
-        m_rootThread = ytccc::GetThreadID();  // 主线程ID
+        m_rootThread = ytccc::GetThreadID();  // 调度器线程ID
         m_threadIDs.push_back(m_rootThread);
     } else {
         m_rootThread = -1;
     }
     m_threadCount = threads;
-}// use_caller 是否将协程纳入线程调度器
+}// use_caller 是否使用当前线程执行任务
 
 Scheduler::~Scheduler() {
     SYLAR_ASSERT(m_stopping);
-    if (GetThis() == this) { t_scheduler = nullptr; }
+    if (GetThis() == this) {
+        t_scheduler = nullptr;
+        SYLAR_LOG_DEBUG(g_logger) << "Scheduler::~Scheduler() " << this->m_name;
+    }
 }
 
 Scheduler *Scheduler::GetThis() { return t_scheduler; }
@@ -79,8 +82,10 @@ void Scheduler::stop() {
     }
     // bool exit_on_this_fiber = true;
     if (m_rootThread != -1) {
+        // use_caller=true的情况。
         SYLAR_ASSERT(GetThis() == this);
     } else {
+        // use_caller=false的情况。
         SYLAR_ASSERT(GetThis() != this);
     }
     m_stopping = true;
@@ -123,7 +128,7 @@ void Scheduler::run() {
         t_scheduler_fiber = Fiber::GetThis().get();// 把当前协程设为主协程
     }
     Fiber::ptr idle_fiber(new Fiber([this] { idle(); }));//空闲协程
-    Fiber::ptr cb_fiber;
+    Fiber::ptr cb_fiber; // 用于执行任务
     FiberAndThread ft;
     while (true) {
         ft.reset();

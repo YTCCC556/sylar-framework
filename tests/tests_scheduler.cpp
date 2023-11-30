@@ -6,7 +6,6 @@
 ytccc::Logger::ptr g_logger = SYLAR_LOG_NAME("system");
 
 void test_fiber1() { SYLAR_LOG_INFO(g_logger) << "test in fiber"; }
-
 void test_fiber2() {
     static int s_count = 5;
     SYLAR_LOG_INFO(g_logger)
@@ -15,10 +14,14 @@ void test_fiber2() {
 
     // sleep(1);
     if (--s_count >= 0) {
-        // ytccc::Scheduler::GetThis()->schedule(&test_fiber2); // 不指定线程执行
-        ytccc::Scheduler::GetThis()->schedule(&test_fiber2,
-                                              ytccc::GetThreadID()); // 指定线程执行
+        ytccc::Scheduler::GetThis()->schedule(&test_fiber2); // 不指定线程执行
+        // ytccc::Scheduler::GetThis()->schedule(&test_fiber2,
+        //                                       ytccc::GetThreadID()); // 指定线程执行
     }
+}
+
+void test01() {
+    SYLAR_LOG_INFO(g_logger)<<"test01";
 }
 
 int main(int argc, char **argv) {
