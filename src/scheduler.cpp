@@ -6,7 +6,7 @@
 
 #include <utility>
 namespace ytccc {
-
+static ytccc::Logger::ptr g_logger = SYLAR_LOG_NAME("system");
 static thread_local Scheduler *t_scheduler = nullptr;
 static thread_local Fiber *t_scheduler_fiber = nullptr;
 // scheduler 实现
@@ -152,7 +152,7 @@ void Scheduler::run() {
                     continue;
                 }
                 ft = *it;
-                m_fibers.erase(it);
+                m_fibers.erase(it++);
                 ++m_activeThreadCount;
                 is_active = true;
                 break;

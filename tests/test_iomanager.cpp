@@ -52,7 +52,44 @@ void test1() {
     iom.schedule(&test_fiber);
 }
 
+void test_timer1() {
+    ytccc::IOManager iom(2);
+    iom.addTimer(
+            500, []() { SYLAR_LOG_INFO(g_logger) << "hello timer"; }, true);
+}
+
+void test_timer2() {
+    // 测试取消功能
+    ytccc::IOManager iom(2);
+    ytccc::Timer::ptr timer = iom.addTimer(
+            500,
+            [&timer]() {
+                static int i = 0;
+                if (++i == 3) { timer->cancel(); }
+
+                SYLAR_LOG_INFO(g_logger) << "hello timer i=" << i;
+            },
+            true);
+}
+
+void test_timer3() {
+    // 测试reset功能
+    ytccc::IOManager iom(2);
+    ytccc::Timer::ptr timer = iom.addTimer(
+            500,
+            [&timer]() {
+                static int i = 0;
+                if (++i == 3) { timer->reset(2000,true); }
+                if (i == 5) { timer->cancel(); }
+                SYLAR_LOG_INFO(g_logger) << "hello timer i=" << i;
+            },
+            true);
+}
+
 int main(int argc, char **argv) {
-    test1();
+    // test1();
+    // test_timer1();
+    // test_timer2();
+    test_timer3();
     return 0;
 }

@@ -19,7 +19,7 @@ static thread_local Fiber::ptr t_threadFiber =
 // 协程栈大小
 static ConfigVar<uint32_t>::ptr g_fiber_stack_size = Config::Lookup<uint32_t>(
         "fiber.stack_size", 1024 * 1024, "fiber stack size");
-// static Logger::ptr g_logger = SYLAR_LOG_NAME("system");
+static Logger::ptr g_logger = SYLAR_LOG_NAME("system");
 
 // 内存分配器 重新封装malloc
 class MallocStackAllocator {
@@ -172,7 +172,7 @@ void Fiber::MainFunc() {
     Fiber::ptr cur = GetThis();//返回当前正在执行的协程
     SYLAR_ASSERT(cur);
     try {
-        SYLAR_LOG_INFO(g_logger) << "cur->m_cb() MainFunc id=" << cur->m_id;
+        // SYLAR_LOG_INFO(g_logger) << "cur->m_cb() MainFunc id=" << cur->m_id;
         cur->m_cb();
         cur->m_cb = nullptr;
         cur->m_state = TERM;

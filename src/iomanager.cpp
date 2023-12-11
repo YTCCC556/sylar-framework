@@ -12,7 +12,7 @@
 
 namespace ytccc {
 
-// static ytccc::Logger::ptr g_logger = SYLAR_LOG_NAME("system");
+static ytccc::Logger::ptr g_logger = SYLAR_LOG_NAME("system");
 
 IOManager::FdContext::EventContext &
 IOManager::FdContext::getContext(Event event) {
@@ -24,6 +24,7 @@ IOManager::FdContext::getContext(Event event) {
         default:
             SYLAR_ASSERT2(false, "getContext");
     }
+    throw std::invalid_argument("getContext invalid event");
 }
 void IOManager::FdContext::resetContext(EventContext &ctx) {
     ctx.scheduler = nullptr;
@@ -45,7 +46,7 @@ void IOManager::FdContext::triggerEvent(Event event) {
     }
     // 执行完毕，设空
     ctx.scheduler = nullptr;
-    // return;
+    return;
 }
 
 IOManager::IOManager(size_t threads, bool use_caller, const std::string &name)
@@ -184,8 +185,9 @@ bool IOManager::cancelEvent(int fd, Event event) {
     int rt = epoll_ctl(m_epfd, op, fd, &epevent);
     if (rt) {
         SYLAR_LOG_ERROR(g_logger)
-                << "epoll_ctl(m_epfd=" << m_epfd << " ,op=" << op << " ,fd=" << fd << ", epevent.events="
-                << epevent.events << ") rt:" << rt << " (errno:" << errno << ") ("
+                << "epoll_ctl(m_epfd=" << m_epfd << " ,op=" << op
+                << " ,fd=" << fd << ", epevent.events=" << epevent.events
+                << ") rt:" << rt << " (errno:" << errno << ") ("
                 << strerror(errno) << ")";
         return false;
     }
@@ -238,8 +240,15 @@ void IOManager::tickle() {
     SYLAR_ASSERT(rt == 1);
 }
 bool IOManager::stopping() {
-    return Scheduler::stopping() && m_pendingEventCount == 0;
+    uint64_t timeout = 0;
+    return stopping(timeout);
 }
+bool IOManager::stopping(uint64_t &timeout) {
+    timeout = getNextTimer();
+    return timeout == ~0ull && m_pendingEventCount == 0 &&
+           Scheduler::stopping();
+}
+
 void IOManager::idle() {
     SYLAR_LOG_DEBUG(g_logger) << "io manager idle";
     //用智能指针包装数组，确保在不再需要这个数组时能够自动释放其内存。
@@ -249,17 +258,26 @@ void IOManager::idle() {
             events, [](epoll_event *ptr) { delete[] ptr; });
 
     while (true) {
-        if (stopping()) {
+        uint64_t next_timeout = 0;
+        if (stopping(next_timeout)) {
             SYLAR_LOG_INFO(g_logger) << "idle stopping exit "
                                      << "name=" << getName();
             break;
         }
         int rt = 0;
         do {
-            static const int MAX_TIMEOUT = 3000;// 设置超时时间
+            static const int MAX_TIMEOUT = 1000;// 设置超时时间
             //如果有事件发生，函数会填充events数组，返回发生事件的文件描述符的数量
-            rt = epoll_wait(m_epfd, events, 64, MAX_TIMEOUT);
-            SYLAR_LOG_INFO(g_logger) << "epoll_wait rt=" << rt;
+            if (next_timeout != ~0ull) {
+                // 取最小的超时时间
+                next_timeout = (int) next_timeout > MAX_TIMEOUT ? MAX_TIMEOUT
+                                                                : next_timeout;
+            } else {
+                next_timeout = MAX_TIMEOUT;
+            }
+            // 利用定时器的时间去休眠
+            rt = epoll_wait(m_epfd, events, MAX_TIMEOUT, (int) next_timeout);
+            // SYLAR_LOG_INFO(g_logger) << "epoll_wait rt=" << rt;
             if (rt < 0 && errno == EINTR) {
                 // 出错，返回值-1，并设置errno指示出错原因
             } else {
@@ -268,15 +286,22 @@ void IOManager::idle() {
             }
         } while (true);
 
+        std::vector<std::function<void()>> cbs;
+        listExpiredCb(cbs);
+        if (!cbs.empty()) {
+            schedule(cbs.begin(), cbs.end());
+            cbs.clear();
+        }
+
         for (int i = 0; i < rt; ++i) {
             epoll_event &event = events[i];
             // SYLAR_LOG_INFO(g_logger) << event.data.fd;
             // 发生事件的文件描述符是否为m_tickleFds[0]，也就是读事件
             if (event.data.fd == m_tickleFds[0]) {
                 uint8_t dummy[256];
-                while (read(m_tickleFds[0], &dummy, sizeof(dummy)) > 0) {
-                    continue;
-                }
+                while (read(m_tickleFds[0], &dummy, sizeof(dummy)) > 0)
+                    ;
+                continue;
             }
             // 获得事件对应的事件描述符内容
             FdContext *fd_ctx = (FdContext *) event.data.ptr;
@@ -289,12 +314,12 @@ void IOManager::idle() {
                  * 读写事件 & 实际事件集 表示实际事件集中读写事件的设置
                  * */
             }
-            int real_events = NONE; // 实际发生的事件
+            int real_events = NONE;// 实际发生的事件
             if (event.events & EPOLLIN) { real_events |= READ; }
             if (event.events & EPOLLOUT) { real_events |= WRITE; }
             // 文件描述符关注的事件，和实际发生的事件
             if ((fd_ctx->events & real_events) == NONE) { continue; }
-            int left_events = (fd_ctx->events & ~real_events); // 去除发生的事件
+            int left_events = (fd_ctx->events & ~real_events);// 去除发生的事件
             // 是否还剩下事件
             int op = left_events ? EPOLL_CTL_MOD : EPOLL_CTL_DEL;
             event.events = EPOLLET | left_events;
@@ -332,5 +357,7 @@ void IOManager::contextResize(size_t size) {
         }
     }
 }
+
+void IOManager::onTimerInsertedAtFront() { tickle(); }
 
 }// namespace ytccc

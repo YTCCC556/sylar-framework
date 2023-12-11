@@ -6,10 +6,11 @@
 #define SYLAR_FRAMEWORK_IOMANAGER_H
 
 #include "scheduler.h"
+#include "timer.h"
 
 namespace ytccc {
 
-class IOManager : public Scheduler {
+class IOManager : public Scheduler, public TimerManager {
 public:
     typedef std::shared_ptr<IOManager> ptr;
     typedef RWMutex RWMutexType;
@@ -50,19 +51,20 @@ protected:
     // 外部不可见，派生类可见
     void tickle() override;
     bool stopping() override;
+    bool stopping(uint64_t &timeout);
     void idle() override;
     void contextResize(size_t size);
+    void onTimerInsertedAtFront() override;
 
 private:
-    int m_epfd = 0; // epoll文件句柄
-    int m_tickleFds[2]; // pipe文件句柄
+    int m_epfd = 0;    // epoll文件句柄
+    int m_tickleFds[2];// pipe文件句柄
 
-    std::atomic<size_t> m_pendingEventCount = 0; // 当前等待执行事件数量
+    std::atomic<size_t> m_pendingEventCount = 0;// 当前等待执行事件数量
     RWMutexType m_mutex;
-    std::vector<FdContext *> m_fdContexts; //socket事件上下文容器
+    std::vector<FdContext *> m_fdContexts;//socket事件上下文容器
 };
 
 }// namespace ytccc
-
 
 #endif//SYLAR_FRAMEWORK_IOMANAGER_H

@@ -5,6 +5,7 @@
 #ifndef SYLAR_FRAMEWORK_UTIL_H
 #define SYLAR_FRAMEWORK_UTIL_H
 
+#include <sys/time.h>
 #include <cstdio>
 #include <stdint.h>
 #include <string>
@@ -25,6 +26,10 @@ std::string BacktraceToString(int size, int skip = 1,
                               const std::string &prefix = "");
 
 std::string GetRelative(std::string path);
+
+// 时间
+uint64_t GetCurrentMS();
+uint64_t GetCurrentUS();
 }// namespace ytccc
 
 

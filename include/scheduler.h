@@ -5,6 +5,7 @@
 #ifndef SYLAR_FRAMEWORK_SCHEDULER_H
 #define SYLAR_FRAMEWORK_SCHEDULER_H
 
+#include <iostream>
 #include <utility>
 
 #include "fiber.h"
@@ -17,7 +18,7 @@
 #include "vector"
 
 namespace ytccc {
-static ytccc::Logger::ptr g_logger = SYLAR_LOG_NAME("system");
+// static ytccc::Logger::ptr g_logger = SYLAR_LOG_NAME("system");
 
 class Scheduler {
 public:
@@ -52,7 +53,7 @@ public:
         {
             MutexType::Lock lock(m_mutex);
             while (begin != end) {
-                need_tickle = scheduleNoLock(&*begin) || need_tickle;
+                need_tickle = scheduleNoLock(&*begin, -1) || need_tickle;
                 ++begin;
             }
         }
@@ -77,10 +78,10 @@ private:
         FiberAndThread ft(fc, thread);
         if (ft.fiber || ft.cb) {
             // if (ft.fiber) {
-            //     SYLAR_LOG_INFO(g_logger)
-            //             << ft.fiber->getID() << " fiber added to Task Queue";
+            //     std::cout << ft.fiber->getID() << " fiber added to Task Queue"
+            //               << std::endl;
             // } else {
-            //     SYLAR_LOG_INFO(g_logger) << "cb added to Task Queue";
+            //     std::cout << "cb added to Task Queue" << std::endl;
             // }
             m_fibers.push_back(ft);
         }
@@ -91,7 +92,7 @@ private:
     struct FiberAndThread {
         Fiber::ptr fiber;
         std::function<void()> cb;
-        int thread; // 猜测用于指定执行协程
+        int thread;// 猜测用于指定执行协程
 
         FiberAndThread(Fiber::ptr f, int thr)
             : fiber(std::move(f)), thread(thr) {}

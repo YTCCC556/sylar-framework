@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
-project(sylar-framework)
+project(ytccc-module)
 
 
 set(CMAKE_VERBOSE_MAKEFILE ON)
@@ -26,6 +26,7 @@ set(LIB_SRC
         src/fiber.cpp
         src/scheduler.cpp
         src/iomanager.cpp
+        src/timer.cpp
 )
 
 add_library(framework SHARED ${LIB_SRC})
