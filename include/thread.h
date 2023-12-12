@@ -7,12 +7,12 @@
 
 #include <atomic>
 #include <functional>
+#include <iostream>
 #include <memory>
 #include <pthread.h>
 #include <semaphore.h>
 #include <string>
 #include <thread>
-
 namespace ytccc {
 
 
@@ -154,9 +154,18 @@ public:
     RWMutex() { pthread_rwlock_init(&m_lock, nullptr); }
     ~RWMutex() { pthread_rwlock_destroy(&m_lock); }
 
-    void rdlock() { pthread_rwlock_rdlock(&m_lock); }
-    void wrlock() { pthread_rwlock_wrlock(&m_lock); }
-    void unlock() { pthread_rwlock_unlock(&m_lock); }
+    void rdlock() {
+        std::cout << "RWMutex:read lock" << std::endl;
+        pthread_rwlock_rdlock(&m_lock);
+    }
+    void wrlock() {
+        std::cout << "RWMutex:write lock" << std::endl;
+        pthread_rwlock_wrlock(&m_lock);
+    }
+    void unlock() {
+        std::cout << "RWMutex:unlock" << std::endl;
+        pthread_rwlock_unlock(&m_lock);
+    }
 
 private:
     pthread_rwlock_t m_lock;

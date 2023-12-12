@@ -53,9 +53,9 @@ void test1() {
 }
 
 void test_timer1() {
-    ytccc::IOManager iom(2);
+    ytccc::IOManager iom(1);
     iom.addTimer(
-            500, []() { SYLAR_LOG_INFO(g_logger) << "hello timer"; }, true);
+            500, []() { SYLAR_LOG_INFO(g_logger) << "hello timer"; }, false);
 }
 
 void test_timer2() {
@@ -88,8 +88,8 @@ void test_timer3() {
 
 int main(int argc, char **argv) {
     // test1();
-    // test_timer1();
+    test_timer1();
     // test_timer2();
-    test_timer3();
+    // test_timer3();
     return 0;
 }

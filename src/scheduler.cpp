@@ -76,6 +76,7 @@ void Scheduler::stop() {
         // 这个线程只有创建Scheduler的线程
         SYLAR_LOG_INFO(g_logger) << this << " stopped";
         m_stopping = true;
+        bool temp = stopping();
         if (stopping()) {// 让其他子类有清理任务的机会
             return;
         }

@@ -3,12 +3,14 @@
 //
 
 #include "timer.h"
+
+#include <utility>
 #include "util.h"
 
 namespace ytccc {
 Timer::Timer(uint64_t ms, std::function<void()> cb, bool recurring,
              TimerManager *manager)
-    : m_recurring(recurring), m_ms(ms), m_cb(cb), m_manager(manager) {
+    : m_recurring(recurring), m_ms(ms), m_cb(std::move(cb)), m_manager(manager) {
     m_next = ytccc::GetCurrentMS() + m_ms;
 }
 
@@ -35,6 +37,7 @@ bool Timer::refresh() {
     return true;
 }
 bool Timer::reset(uint64_t ms, bool from_now) {
+    // 周期相同，并且不从现在开始计算
     if (ms == m_ms && !from_now) { return true; }
     TimerManager::RWMutexType::WriteLock lock(m_manager->m_mutex);
 
@@ -52,9 +55,7 @@ bool Timer::reset(uint64_t ms, bool from_now) {
     }
     m_ms = ms;
     m_next = start + m_ms;
-
     m_manager->addTimer(tmp, lock);
-
     return true;
 }
 
@@ -87,13 +88,16 @@ Timer::ptr TimerManager::addTimer(uint64_t ms, std::function<void()> cb,
     //     onTimerInsertedAtFront();
     // }
     addTimer(timer, lock);
+    // lock.unlock();
     return timer;
 }
 
 static void OnTimer(const std::weak_ptr<void> &weak_cond,
                     std::function<void()> cb) {
-    std::shared_ptr<void> tmp = weak_cond.lock();
-    if (tmp) { cb(); }
+    // 用来检查其指向的对象是否仍然存在
+    std::shared_ptr<void> tmp =
+            weak_cond.lock();//将 weak_cond 转换为 std::shared_ptr<void>。
+    if (tmp) { cb(); }       // 转换成功，执行回调函数
 }
 
 Timer::ptr TimerManager::addConditionTimer(uint64_t ms,
@@ -107,7 +111,7 @@ Timer::ptr TimerManager::addConditionTimer(uint64_t ms,
 uint64_t TimerManager::getNextTimer() {
     RWMutexType::ReadLock lock(m_mutex);
     m_tickled = false;
-    if (m_times.empty()) { return ~0ull; }
+    if (m_times.empty()) { return ~0ull; }// 无符号整数的最大值
     const Timer::ptr &next = *m_times.begin();
     uint64_t now_ms = ytccc::GetCurrentMS();
     if (now_ms >= next->m_next) {
@@ -129,6 +133,7 @@ void TimerManager::listExpiredCb(std::vector<std::function<void()>> &cbs) {
     bool rollover = detectClockRollover(now_ms);
     if (!rollover && ((*m_times.begin())->m_next == now_ms)) { return; }
     Timer::ptr now_time(new Timer(now_ms));
+    // 没有回滚过 取 m_times 容器中大于等于 now_time 的第一个元素的迭代器。
     auto it = rollover ? m_times.end() : m_times.lower_bound(now_time);
     while (it != m_times.end() && (*it)->m_next == now_ms) { ++it; }
     expired.insert(expired.begin(), m_times.begin(), it);
@@ -153,10 +158,8 @@ void TimerManager::onTimerInsertedAtFront() {}
 void TimerManager::addTimer(Timer::ptr val, RWMutexType::WriteLock &lock) {
     auto it = m_times.insert(val).first;
     bool at_front = (it == m_times.begin()) && !m_tickled;
-    if (at_front) m_tickled = true;// 不需要来回修改，多次修改仅需一次
-    lock.unlock();
     if (at_front) {
-        // 如果插入到最前端，执行如下函数
+        m_tickled = true;
         onTimerInsertedAtFront();
     }
 }

@@ -11,14 +11,12 @@
 #include <set>
 #include <vector>
 
-
 namespace ytccc {
 
 class TimerManager;
 
 class Timer : public std::enable_shared_from_this<Timer> {
     friend class TimerManager;
-
 public:
     typedef std::shared_ptr<Timer> ptr;
     bool cancel();
@@ -29,8 +27,6 @@ private:
     Timer(uint64_t ms, std::function<void()> cb, bool recurring,
           TimerManager *manager);
     Timer(uint64_t next);
-
-
 
 private:
     bool m_recurring = false;// 是否循环执行器
@@ -47,7 +43,6 @@ private:
 
 class TimerManager {
     friend class Timer;
-
 public:
     typedef RWMutex RWMutexType;
     TimerManager();

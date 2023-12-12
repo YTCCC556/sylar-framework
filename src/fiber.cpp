@@ -196,8 +196,8 @@ void Fiber::CallerMainFunc() {
     Fiber::ptr cur = GetThis();// cur指向当前正在执行的协程
     SYLAR_ASSERT(cur);
     try {
-        SYLAR_LOG_INFO(g_logger)
-                << "cur->m_cb() CallerMainFunc id=" << cur->m_id;
+        // SYLAR_LOG_INFO(g_logger)
+        //         << "cur->m_cb() CallerMainFunc id=" << cur->m_id;
         cur->m_cb();        // 执行回调函数
         cur->m_cb = nullptr;// 清空回调函数
         cur->m_state = TERM;// 设置状态
