@@ -295,7 +295,6 @@ public:
 
     uint64_t addListener(on_change_cb cb) {
         static uint64_t s_fun_id = 0;
-
         MutexType::WriteLock lock(m_mutex);
         ++s_fun_id;
         m_cbs[s_fun_id] = cb;

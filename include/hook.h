@@ -15,6 +15,10 @@ void set_hook_enable(bool flag);
 }// namespace ytccc
 
 extern "C" {
+/* typedef unsigned int (*sleep_fun)(unsigned int seconds);
+ * 定义类型别名，表示一个指针函数类型，是一个指向有一个参数的函数的指针。
+ * */
+
 // sleep 相关
 typedef unsigned int (*sleep_fun)(unsigned int seconds);// 声明函数指针类型
 typedef int (*usleep_fun)(useconds_t usec);

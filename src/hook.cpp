@@ -15,10 +15,13 @@
 #include <sys/socket.h>
 
 ytccc::Logger::ptr hook_logger = SYLAR_LOG_NAME("system");
+
 namespace ytccc {
+
 static ytccc::ConfigVar<int>::ptr g_tcp_timeout = ytccc::Config::Lookup(
         "tcp.connect.timeout", 5000, "tcp connect timeout");
 static thread_local bool t_hook_enable = false;
+
 #define HOOK_FUN(XX)                                                           \
     XX(sleep)                                                                  \
     XX(usleep)                                                                 \
@@ -79,7 +82,6 @@ template<typename OriginFun, typename... Args>
 static ssize_t do_io(int fd, OriginFun fun, const char *hook_fun_name,
                      uint32_t event, int timeout_so, Args &&...args) {
     if (!ytccc::t_hook_enable) return fun(fd, std::forward<Args>(args)...);
-
     // 判断是否进入
     // SYLAR_LOG_DEBUG(hook_logger) << "do_io<" << hook_fun_name << ">";
 
@@ -93,10 +95,10 @@ static ssize_t do_io(int fd, OriginFun fun, const char *hook_fun_name,
         return fun(fd, std::forward<Args>(args)...);
     }
     uint64_t to = ctx->getTimeout(timeout_so);
-    std::shared_ptr<timer_info> tinfo(new timer_info);
+    std::shared_ptr<timer_info> tinfo(new timer_info);// 智能指针
 
 retry:
-    ssize_t n = fun(fd, std::forward<Args>(args)...);
+    ssize_t n = fun(fd, std::forward<Args>(args)...);// 调用系统函数
     while (n == -1 && errno == EINTR) {
         n = fun(fd, std::forward<Args>(args)...);
     }
@@ -105,36 +107,41 @@ retry:
         // SYLAR_LOG_DEBUG(hook_logger) << "do_io<" << hook_fun_name << ">";
         ytccc::IOManager *iom = ytccc::IOManager::GetThis();
         ytccc::Timer::ptr timer;
-        std::weak_ptr<timer_info> winfo(tinfo);
+        std::weak_ptr<timer_info> winfo(
+                tinfo);// 避免在定时器回调函数中形成循环引用
         if (to != (uint64_t) -1) {
+            // TODO 条件定时器就是用来取消事件的吗
             timer = iom->addConditionTimer(
                     to,
                     [winfo, fd, iom, event]() {
                         auto t = winfo.lock();
-                        if (!t || t->cancelled) { return; }
+                        if (!t || t->cancelled) {
+                            return;
+                        }// 已经被取消了，直接返回
+                        // 否则，设置标志，取消事件
                         t->cancelled = ETIMEDOUT;
                         iom->cancelEvent(fd, (ytccc::IOManager::Event)(event));
                     },
                     winfo);
         }
-        // int c = 0;
-        // uint64_t now = 0;
+
         int rt = iom->addEvent(fd, (ytccc::IOManager::Event)(event));
-        if (rt) {
-            // if (c) {
-            //     SYLAR_LOG_ERROR(g_logger)
-            //             << hook_fun_name << " addEvent(" << fd << "," << event
-            //             << ") retry c=" << c
-            //             << " used=" << (ytccc::GetCurrentMS() - now);
-            // }
+        if (rt) {// 注册事件失败
+            /*if (c) {
+                SYLAR_LOG_ERROR(g_logger)
+                        << hook_fun_name << " addEvent(" << fd << "," << event
+                        << ") retry c=" << c
+                        << " used=" << (ytccc::GetCurrentMS() - now);
+            }*/
             SYLAR_LOG_ERROR(hook_logger) << hook_fun_name << " addEvent(" << fd
                                          << "," << event << ")";
             if (timer) { timer->cancel(); }
             return -1;
         } else {
-            ytccc::Fiber::YieldToHold();
+            ytccc::Fiber::YieldToHold();// 让出执行权，等待事件发生
+            // 创建一个定时器，同时注册一个事件，并让当前协程让出执行权，等待事件发生。
             if (timer) { timer->cancel(); }
-            if (tinfo->cancelled) {
+            if (tinfo->cancelled) {// 定时器已经被取消
                 errno = tinfo->cancelled;
                 return -1;
             }

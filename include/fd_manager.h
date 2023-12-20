@@ -14,7 +14,6 @@ namespace ytccc {
 class FdCtx : public std::enable_shared_from_this<FdCtx> {
 public:
     typedef std::shared_ptr<FdCtx> ptr;
-    // typedef RWMutex RWMutexType;
 
     FdCtx(int fd);
     ~FdCtx();
@@ -33,6 +32,7 @@ public:
     uint64_t getTimeout(int type);
 
 private:
+    // 使用了位域（bit-field）的方式将其大小限制为 1 位，表示该布尔变量只占一位
     bool m_isInit : 1;
     bool m_isSocket : 1;
     bool m_userNonblock : 1;
@@ -41,7 +41,7 @@ private:
     int m_fd;
     uint64_t m_recvTimeout;
     uint64_t m_sendTimeout;
-    ytccc::IOManager *m_iomanager;
+    // ytccc::IOManager *m_iomanager;
 };
 
 class FdManager {

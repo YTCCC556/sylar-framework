@@ -4,10 +4,8 @@
 
 #include "fd_manager.h"
 #include "hook.h"
-
 #include <sys/socket.h>
 #include <sys/stat.h>
-
 #include <fcntl.h>
 namespace ytccc {
 
@@ -21,10 +19,11 @@ FdCtx::~FdCtx() {}
 
 bool FdCtx::init() {
     if (m_isInit) return true;
-    m_recvTimeout = -1;
+    m_recvTimeout = -1; // 冗余
     m_sendTimeout = -1;
     struct stat fd_stat;
     if (fstat(m_fd, &fd_stat) == -1) {
+        // 获取文件状态信息,获取描述符fd所指向文件的相关信息
         m_isInit = false;
         m_isSocket = false;
     } else {
@@ -32,8 +31,10 @@ bool FdCtx::init() {
         m_isSocket = S_ISSOCK(fd_stat.st_mode);
     }
     if (m_isSocket) {
+        // 使用 F_GETFL 命令，表示获取文件状态标志。第三个参数 0 通常不需要，因此被省略
         int flags = fcntl_f(m_fd, F_GETFL, 0);
         if (!(flags & O_NONBLOCK)) {
+            // 如果flag为非阻塞状态，将文件描述符的状态设为阻塞
             fcntl_f(m_fd, F_SETFL, flags | O_NONBLOCK);
         }
         m_sysNonblock = true;

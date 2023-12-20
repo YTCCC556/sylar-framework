@@ -95,6 +95,7 @@ Timer::ptr TimerManager::addTimer(uint64_t ms, std::function<void()> cb,
 static void OnTimer(const std::weak_ptr<void> &weak_cond,
                     std::function<void()> cb) {
     // 用来检查其指向的对象是否仍然存在
+    // 避免在定时器回调函数中形成循环引用
     std::shared_ptr<void> tmp =
             weak_cond.lock();//将 weak_cond 转换为 std::shared_ptr<void>。
     if (tmp) { cb(); }       // 转换成功，执行回调函数
