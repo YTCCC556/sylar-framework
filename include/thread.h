@@ -5,6 +5,7 @@
 #ifndef SYLAR_FRAMEWORK_THREAD_H
 #define SYLAR_FRAMEWORK_THREAD_H
 
+#include "noncopyable.h"
 #include <atomic>
 #include <functional>
 #include <iostream>
@@ -15,14 +16,13 @@
 #include <thread>
 namespace ytccc {
 
-
-class Noncopyable {
-public:
-    Noncopyable() = default;
-    ~Noncopyable() = default;
-    Noncopyable(const Noncopyable &) = delete;
-    Noncopyable &operator=(const Noncopyable &) = delete;
-};
+// class Noncopyable {
+// public:
+//     Noncopyable() = default;
+//     ~Noncopyable() = default;
+//     Noncopyable(const Noncopyable &) = delete;
+//     Noncopyable &operator=(const Noncopyable &) = delete;
+// };
 
 // 信号量封装类
 class Semaphore : Noncopyable {
@@ -155,15 +155,15 @@ public:
     ~RWMutex() { pthread_rwlock_destroy(&m_lock); }
 
     void rdlock() {
-        std::cout << "RWMutex:read lock" << std::endl;
+        // std::cout << "RWMutex:read lock" << std::endl;
         pthread_rwlock_rdlock(&m_lock);
     }
     void wrlock() {
-        std::cout << "RWMutex:write lock" << std::endl;
+        // std::cout << "RWMutex:write lock" << std::endl;
         pthread_rwlock_wrlock(&m_lock);
     }
     void unlock() {
-        std::cout << "RWMutex:unlock" << std::endl;
+        // std::cout << "RWMutex:unlock" << std::endl;
         pthread_rwlock_unlock(&m_lock);
     }
 

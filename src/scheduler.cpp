@@ -3,7 +3,7 @@
 //
 
 #include "scheduler.h"
-
+#include "hook.h"
 #include <utility>
 namespace ytccc {
 static ytccc::Logger::ptr g_logger = SYLAR_LOG_NAME("system");
@@ -124,12 +124,13 @@ void Scheduler::idle() {
 
 void Scheduler::run() {
     SYLAR_LOG_DEBUG(g_logger) << m_name << " run";
+    set_hook_enable(true);
     setThis();
     if (ytccc::GetThreadID() != m_rootThread) {// 线程ID不等于主线程的ID
         t_scheduler_fiber = Fiber::GetThis().get();// 把当前协程设为主协程
     }
     Fiber::ptr idle_fiber(new Fiber([this] { idle(); }));//空闲协程
-    Fiber::ptr cb_fiber; // 用于执行任务
+    Fiber::ptr cb_fiber;                                 // 用于执行任务
     FiberAndThread ft;
     while (true) {
         ft.reset();

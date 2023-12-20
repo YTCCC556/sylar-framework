@@ -64,6 +64,7 @@ private:
 
 private:
     RWMutexType m_mutex;
+    // set集合中的元素会自动排序
     std::set<Timer::ptr, Timer::Comparator> m_times;
     bool m_tickled = false;
     uint64_t m_previousTime = 0;

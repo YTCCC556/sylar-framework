@@ -27,6 +27,8 @@ set(LIB_SRC
         src/scheduler.cpp
         src/iomanager.cpp
         src/timer.cpp
+        src/hook.cpp
+        src/fd_manager.cpp
 )
 
 add_library(framework SHARED ${LIB_SRC})
