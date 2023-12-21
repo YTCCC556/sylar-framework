@@ -162,12 +162,13 @@ unsigned int sleep(unsigned int seconds) {
     if (!ytccc::t_hook_enable) { return sleep_f(seconds); }
     ytccc::Fiber::ptr fiber = ytccc::Fiber::GetThis();
     ytccc::IOManager *iom = ytccc::IOManager::GetThis();
-    iom->addTimer(seconds * 1000,
-                  std::bind((void(ytccc::Scheduler::*)(ytccc::Fiber::ptr,
-                                                       int thread)) &
-                                    ytccc::IOManager::schedule,
-                            iom, fiber, -1));
+    // iom->addTimer(seconds * 1000,
+    //               std::bind((void(ytccc::Scheduler::*)(ytccc::Fiber::ptr,
+    //                                                    int thread)) &
+    //                                 ytccc::IOManager::schedule,
+    //                         iom, fiber, -1));
     // iom->addTimer(seconds * 1000, [iom, fiber]() { iom->schedule(fiber); });
+    iom->addTimer(seconds * 1000, [iom, fiber]() { iom->schedule(fiber, -1); });
     ytccc::Fiber::YieldToHold();
     return 0;
 }
@@ -175,6 +176,7 @@ int usleep(useconds_t usec) {
     if (!ytccc::t_hook_enable) { return usleep_f(usec); }
     ytccc::Fiber::ptr fiber = ytccc::Fiber::GetThis();
     ytccc::IOManager *iom = ytccc::IOManager::GetThis();
+
     iom->addTimer(usec / 1000,
                   std::bind((void(ytccc::Scheduler::*)(ytccc::Fiber::ptr,
                                                        int thread)) &
@@ -204,7 +206,6 @@ int socket(int domain, int type, int protocol) {
     int fd = socket_f(domain, type, protocol);
     if (fd == -1) return fd;
     ytccc::FdMgr::GetInstance()->get(fd, true);
-
     return fd;
 }
 int connect_with_timeout(int fd, const struct sockaddr *addr, socklen_t addrlen,
@@ -221,6 +222,7 @@ int connect_with_timeout(int fd, const struct sockaddr *addr, socklen_t addrlen,
     if (n == 0) {
         return 0;
     } else if (n != -1 || errno != EINPROGRESS) {
+        // 没有出错，没有正在执行
         return n;
     }
     ytccc::IOManager *iom = ytccc::IOManager::GetThis();
@@ -241,7 +243,7 @@ int connect_with_timeout(int fd, const struct sockaddr *addr, socklen_t addrlen,
     int rt = iom->addEvent(fd, ytccc::IOManager::WRITE);
     if (rt == 0) {
         // 添加成功
-        ytccc::Fiber::YieldToHold();// 唤醒
+        ytccc::Fiber::YieldToHold();// 让出控制权，等待唤醒
         if (timer) { timer->cancel(); }
         if (tinfo->cancelled) {
             errno = tinfo->cancelled;
@@ -255,7 +257,7 @@ int connect_with_timeout(int fd, const struct sockaddr *addr, socklen_t addrlen,
 
     int error = 0;
     socklen_t len = sizeof(int);
-    if (-1 == getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &len)) { return -1; }
+    if (-1 == getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &len)) return -1;
     if (!error) {
         return 0;
     } else {
@@ -322,7 +324,7 @@ ssize_t sendmsg(int s, const struct msghdr *msg, int flags) {
                  msg, flags);
 }
 int close(int fd) {
-    if (ytccc::t_hook_enable) { return close_f(fd); }
+    if (!ytccc::t_hook_enable) { return close_f(fd); }
     ytccc::FdCtx::ptr ctx = ytccc::FdMgr::GetInstance()->get(fd);
     if (ctx) {
         auto iom = ytccc::IOManager::GetThis();

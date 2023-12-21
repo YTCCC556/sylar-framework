@@ -13,6 +13,7 @@ ytccc::Logger::ptr g_logger = SYLAR_LOG_ROOT();
 void test_sleep() {
     ytccc::IOManager iom(1);
     // 增加hook后，一下两个定时器并发执行，而不是顺序执行
+    SYLAR_LOG_INFO(g_logger) << "test sleep";
     iom.schedule([]() {
         sleep(2);
         SYLAR_LOG_INFO(g_logger) << "sleep 2";
@@ -21,7 +22,7 @@ void test_sleep() {
         sleep(3);
         SYLAR_LOG_INFO(g_logger) << "sleep 3";
     });
-    SYLAR_LOG_INFO(g_logger) << "test sleep";
+
 }
 
 void test_sock() {
