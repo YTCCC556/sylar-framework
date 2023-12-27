@@ -29,6 +29,8 @@ set(LIB_SRC
         src/timer.cpp
         src/hook.cpp
         src/fd_manager.cpp
+        src/address.cpp
+        src/socket.cpp
 )
 
 add_library(framework SHARED ${LIB_SRC})

@@ -177,11 +177,12 @@ int usleep(useconds_t usec) {
     ytccc::Fiber::ptr fiber = ytccc::Fiber::GetThis();
     ytccc::IOManager *iom = ytccc::IOManager::GetThis();
 
-    iom->addTimer(usec / 1000,
-                  std::bind((void(ytccc::Scheduler::*)(ytccc::Fiber::ptr,
-                                                       int thread)) &
-                                    ytccc::IOManager::schedule,
-                            iom, fiber, -1));
+    // iom->addTimer(usec / 1000,
+    //               std::bind((void(ytccc::Scheduler::*)(ytccc::Fiber::ptr,
+    //                                                    int thread)) &
+    //                                 ytccc::IOManager::schedule,
+    //                         iom, fiber, -1));
+    iom->addTimer(usec / 1000, [iom, fiber]() { iom->schedule(fiber, -1); });
     ytccc::Fiber::YieldToHold();
     return 0;
 }
@@ -191,11 +192,12 @@ int nanosleep(const struct timespec *reg, struct timespec *rem) {
 
     ytccc::Fiber::ptr fiber = ytccc::Fiber::GetThis();
     ytccc::IOManager *iom = ytccc::IOManager::GetThis();
-    iom->addTimer(timeout_ms,
-                  std::bind((void(ytccc::Scheduler::*)(ytccc::Fiber::ptr,
-                                                       int thread)) &
-                                    ytccc::IOManager::schedule,
-                            iom, fiber, -1));
+    // iom->addTimer(timeout_ms,
+    //               std::bind((void(ytccc::Scheduler::*)(ytccc::Fiber::ptr,
+    //                                                    int thread)) &
+    //                                 ytccc::IOManager::schedule,
+    //                         iom, fiber, -1));
+    iom->addTimer(timeout_ms, [iom, fiber]() { iom->schedule(fiber, -1); });
     ytccc::Fiber::YieldToHold();
     return 0;
 }
@@ -352,7 +354,7 @@ int fcntl(int fd, int cmd, ...) {
                 arg &= ~O_NONBLOCK;
             }
             return fcntl_f(fd, cmd, arg);
-        } break;
+        }
         case F_GETFL: {
             va_end(va);
             int arg = fcntl_f(fd, cmd);
@@ -363,7 +365,7 @@ int fcntl(int fd, int cmd, ...) {
             } else {
                 return arg & ~O_NONBLOCK;
             }
-        } break;
+        }
             // int
         case F_DUPFD:
         case F_DUPFD_CLOEXEC:
@@ -376,7 +378,7 @@ int fcntl(int fd, int cmd, ...) {
             int arg = va_arg(va, int);
             va_end(va);
             return fcntl_f(fd, cmd, arg);
-        } break;
+        }
             // void
 
         case F_GETFD:
@@ -386,7 +388,7 @@ int fcntl(int fd, int cmd, ...) {
         case F_GETPIPE_SZ: {
             va_end(va);
             return fcntl_f(fd, cmd);
-        } break;
+        }
             //flock
         case F_SETLK:
         case F_SETLKW:
@@ -394,14 +396,14 @@ int fcntl(int fd, int cmd, ...) {
             struct flock *arg = va_arg(va, struct flock *);
             va_end(va);
             return fcntl_f(fd, cmd, arg);
-        } break;
+        }
             //f_owner_exlock
         case F_GETOWN_EX:
         case F_SETOWN_EX: {
             struct f_owner_exlock *arg = va_arg(va, struct f_owner_exlock *);
             va_end(va);
             return fcntl_f(fd, cmd, arg);
-        } break;
+        }
         default:
             va_end(va);
             return fcntl_f(fd, cmd);
