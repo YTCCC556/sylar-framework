@@ -203,7 +203,7 @@ bool IOManager::cancelAll(int fd) {
     lock.unlock();
     FdContext::MutexType::Lock lock1(fd_ctx->mutex);
     // 判断是否有事件
-    if (fd_ctx->events) { return false; }
+    if (!fd_ctx->events) { return false; }
 
     int op = EPOLL_CTL_DEL;
     epoll_event epevent;
@@ -260,8 +260,7 @@ void IOManager::idle() {
     while (true) {
         uint64_t next_timeout = 0;
         if (stopping(next_timeout)) {
-            SYLAR_LOG_INFO(g_logger) << "idle stopping exit "
-                                     << "name=" << getName();
+            SYLAR_LOG_INFO(g_logger) << "idle stopping exit ";
             break;
         }
         int rt = 0;

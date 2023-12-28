@@ -13,7 +13,7 @@
     {                                                                          \
         if (!(x)) {                                                            \
             SYLAR_LOG_ERROR(SYLAR_LOG_ROOT())                                  \
-                    << "ASSERTION: " #x << "\nbacktrace:\n"                     \
+                    << "ASSERTION: " #x << "\nbacktrace:\n"                    \
                     << ytccc::BacktraceToString(100, 2, "    ");               \
             assert(x);                                                         \
         }                                                                      \
@@ -29,5 +29,13 @@
             assert(x);                                                         \
         }                                                                      \
     }
+
+#if defined __GUNC__ || defined __llvm__
+#define SYLAR_LICKLY(x) __buildtin_expect(!!(x), 1)
+#define SYLAR_UNLICKLY(x) __builtin_expect(!!(x), 0)
+#else
+#define SYLAR_LICKLY(x) (x)
+#define SYLAR_UNLICKLY(x) (x)
+#endif
 
 #endif//SYLAR_FRAMEWORK_MACRO_H

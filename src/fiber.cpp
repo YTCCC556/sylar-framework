@@ -32,17 +32,20 @@ using StackAllocator = MallocStackAllocator;// 为类型引入别名
 /*Fiber实现*/
 // 线程的主协程
 Fiber::Fiber() {
-    SYLAR_LOG_DEBUG(g_logger) << "Fiber::Fiber() " << this->m_id;
+    ++s_fiber_count;
+    SYLAR_LOG_DEBUG(g_logger)
+            << "Fiber::Fiber() id=" << this->m_id << " total=" << s_fiber_count;
     m_state = EXEC;
     SetThis(this);// 把主协程设为当前协程
     if (getcontext(&m_ctx)) { SYLAR_ASSERT2(false, "getcontext"); }
-    ++s_fiber_count;
 }
 // 创建新协程，创建栈空间
 Fiber::Fiber(std::function<void()> cb, size_t stacksize, bool use_caller)
     : m_id(++s_fiber_id), m_cb(std::move(cb)) {
-    SYLAR_LOG_DEBUG(g_logger) << "Fiber::Fiber(...) id=" << m_id;
     ++s_fiber_count;
+    SYLAR_LOG_DEBUG(g_logger)
+            << "Fiber::Fiber(...) id=" << m_id << " total=" << s_fiber_count;
+
     m_stacksize = stacksize ? stacksize : g_fiber_stack_size->getValue();
     m_stack = StackAllocator::Alloc(m_stacksize);// 根据大小分配内存
     if (getcontext(&m_ctx)) { SYLAR_ASSERT2(false, "getcontext"); }
@@ -60,9 +63,9 @@ Fiber::Fiber(std::function<void()> cb, size_t stacksize, bool use_caller)
 }
 // 协程结束后，回收内存
 Fiber::~Fiber() {
+    --s_fiber_count;
     SYLAR_LOG_INFO(g_logger)
             << "Fiber::~Fiber() id=" << m_id << " total=" << s_fiber_count;
-    --s_fiber_count;
     if (m_stack) {
         // 状态不是TERM、INIT、EXCEPT(结束，初始化，一场)中的一个，报错
         SYLAR_ASSERT(m_state == TERM || m_state == INIT || m_state == EXCEPT);

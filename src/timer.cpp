@@ -130,9 +130,9 @@ void TimerManager::listExpiredCb(std::vector<std::function<void()>> &cbs) {
         if (m_times.empty()) { return; }
     }
     RWMutexType::WriteLock lock(m_mutex);
-
+    if(m_times.empty()) return;
     bool rollover = detectClockRollover(now_ms);
-    if (!rollover && ((*m_times.begin())->m_next == now_ms)) { return; }
+    if (!rollover && ((*m_times.begin())->m_next > now_ms)) { return; }
     Timer::ptr now_time(new Timer(now_ms));
     // 没有回滚过 取 m_times 容器中大于等于 now_time 的第一个元素的迭代器。
     auto it = rollover ? m_times.end() : m_times.lower_bound(now_time);

@@ -159,6 +159,7 @@ void Scheduler::run() {
                 is_active = true;
                 break;
             }
+            tickle_me |= it != m_fibers.end();
         }
         if (tickle_me) { tickle(); }
         // 协程 且状态不为TERM

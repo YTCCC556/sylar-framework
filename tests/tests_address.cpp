@@ -36,8 +36,8 @@ void test_ipv4() {
     if (addr) { SYLAR_LOG_INFO(g_logger) << addr->toString(); }
 }
 int main(int argc, char **argv) {
-    // test();
+    test();
     // test_iface();
-    test_ipv4();
+    // test_ipv4();
     return 0;
 }
