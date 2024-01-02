@@ -60,6 +60,7 @@ bool Address::Lookup(std::vector<Address::ptr> &result, const std::string &host,
     const char *service = nullptr;
     // 检查ipv6address service
     if (!host.empty() && host[0] == '[') {
+        // 在host中搜索字符']'，搜索范围为整个host
         const char *endipv6 =
                 (const char *) memchr(host.c_str() + 1, ']', host.size() - 1);
         if (endipv6) {
@@ -68,18 +69,19 @@ bool Address::Lookup(std::vector<Address::ptr> &result, const std::string &host,
             node = host.substr(1, endipv6 - host.c_str() - 1);
         }
     }
-    // 检查node service
-    if (node.empty()) {
+    // 检查node service 检查端口号
+    if (node.empty()) { // host开头不为'['，或[]之间无内容
         service = (const char *) memchr(host.c_str(), ':', host.size());
-        if (service) {
+        if (service) { // host中有':'，service为指向':'的指针，
             if (!memchr(service + 1, ':',
                         host.c_str() + host.size() - service - 1)) {
+                // ':'之后还有':'
                 node = host.substr(0, service - host.c_str());
                 ++service;
             }
         }
     }
-    if (node.empty()) { node = host; }
+    if (node.empty()) node = host;// 若node还是空的，说明host中不包含'[]'以及':'等附加内容
     int error = getaddrinfo(node.c_str(), service, &hints, &results);
     if (error) {
         SYLAR_LOG_ERROR(g_logger)
