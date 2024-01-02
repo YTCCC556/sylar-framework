@@ -4,13 +4,16 @@
 
 #ifndef YTCCC_MODULE_UTIL_ENDIAN_H
 #define YTCCC_MODULE_UTIL_ENDIAN_H
+
 #define SYLAR_LITTLE_ENDIAN 1
 #define SYLAR_BIG_ENDIAN 2
 
 #include <boost/asio.hpp>
 #include <byteswap.h>
-#include <stdint.h>
+#include <cstdint>
+
 namespace ytccc {
+// 一下函数为自定义，不为sylar原本的转换函数。
 uint32_t convertToLittleEndianIPv4(const char *ipAddress) {
     boost::asio::ip::address_v4 addr =
             boost::asio::ip::address_v4::from_string(ipAddress);

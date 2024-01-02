@@ -7,8 +7,8 @@
 #include <cstddef>
 #include <cstring>
 #include <ifaddrs.h>
-#include <netdb.h>
 #include <memory>
+#include <netdb.h>
 #include <sstream>
 
 namespace ytccc {
@@ -17,6 +17,7 @@ static ytccc::Logger::ptr g_logger = SYLAR_LOG_ROOT();
 
 template<class T>
 static T CreateMask(uint32_t bits) {
+    // 返回取反的掩码
     return (1 << (sizeof(T) * 8 - bits)) - 1;
 }
 template<class T>
@@ -46,6 +47,7 @@ Address::ptr Address::Create(const sockaddr *addr, socklen_t addrlen) {
 }
 bool Address::Lookup(std::vector<Address::ptr> &result, const std::string &host,
                      int family, int type, int protocol) {
+    // host中存储了域名或服务器名
     addrinfo hints, *results, *next;
     hints.ai_flags = 0;
     hints.ai_family = family;
@@ -59,29 +61,31 @@ bool Address::Lookup(std::vector<Address::ptr> &result, const std::string &host,
     std::string node;
     const char *service = nullptr;
     // 检查ipv6address service
-    if (!host.empty() && host[0] == '[') {
+    if (!host.empty() && host[0] == '[') {// 以'['开头表面为ipv6地址
         // 在host中搜索字符']'，搜索范围为整个host
         const char *endipv6 =
                 (const char *) memchr(host.c_str() + 1, ']', host.size() - 1);
         if (endipv6) {
             // TODO check out of range
-            if (*(endipv6 + 1) == ':') service == endipv6 + 2;
+            if (*(endipv6 + 1) == ':') service = endipv6 + 2;
+            // 地址内容为结束位置减去开头位置-1
             node = host.substr(1, endipv6 - host.c_str() - 1);
         }
     }
     // 检查node service 检查端口号
-    if (node.empty()) { // host开头不为'['，或[]之间无内容
+    if (node.empty()) {// host开头不为'['，或[]之间无内容
         service = (const char *) memchr(host.c_str(), ':', host.size());
-        if (service) { // host中有':'，service为指向':'的指针，
+        if (service) {// host中有':'，service为指向':'的指针，
             if (!memchr(service + 1, ':',
                         host.c_str() + host.size() - service - 1)) {
-                // ':'之后还有':'
+                // ':'之后没有':'了
                 node = host.substr(0, service - host.c_str());
                 ++service;
             }
         }
     }
-    if (node.empty()) node = host;// 若node还是空的，说明host中不包含'[]'以及':'等附加内容
+    if (node.empty())
+        node = host;// 若node还是空的，说明host中不包含'[]'以及':'等附加内容
     int error = getaddrinfo(node.c_str(), service, &hints, &results);
     if (error) {
         SYLAR_LOG_ERROR(g_logger)
@@ -119,6 +123,7 @@ bool Address::GetInterfaceAddress(
         std::multimap<std::string, std::pair<Address::ptr, uint32_t>> &result,
         int family) {// 获得指定网卡的地址
     struct ifaddrs *next, *results;
+    // 获得当前系统中所有网络接口的地址信息，成功返回0，失败返回-1
     if (getifaddrs(&results) != 0) {
         SYLAR_LOG_ERROR(g_logger)
                 << "Address::GetInterfaceAddress get if_addrs err=" << errno
@@ -128,11 +133,12 @@ bool Address::GetInterfaceAddress(
     try {
         for (next = results; next; next = next->ifa_next) {
             Address::ptr addr;
-            uint32_t prefix_length = ~0u;
+            uint32_t prefix_length = ~0u;// 无符号最大整数
             if (family != AF_UNSPEC && family != next->ifa_addr->sa_family) {
                 continue;
-            }
+            }//AF_UNSPEC 未指定地址簇
             switch (next->ifa_addr->sa_family) {
+                    //根据地址类型创建地址，获得网络掩码，和字符长度
                 case AF_INET: {
                     addr = Create(next->ifa_addr, sizeof(sockaddr_in));
                     uint32_t netmask = ((sockaddr_in *) next->ifa_netmask)
@@ -167,6 +173,7 @@ bool Address::GetInterfaceAddress(
 bool Address::GetInterfaceAddress(
         std::vector<std::pair<Address::ptr, uint32_t>> &result,
         const std::string &iface, int family) {// 获得指定网卡的地址
+    // 指定内容为空，创建地址类返回。
     if (iface.empty() || iface == "*") {
         if (family == AF_INET || family == AF_UNSPEC) {
             result.emplace_back(Address::ptr(new IPv4Address()), 0u);
@@ -178,7 +185,7 @@ bool Address::GetInterfaceAddress(
     }
     std::multimap<std::string, std::pair<Address::ptr, uint32_t>> results;
     if (!GetInterfaceAddress(results, family)) { return false; }
-    auto its = results.equal_range(iface);
+    auto its = results.equal_range(iface);// 返回一个表示范围的pair对象，
     for (; its.first != its.second; ++its.first) {
         result.push_back(its.first->second);
     }
@@ -194,11 +201,11 @@ std::string Address::toString() const {
 bool Address::operator<(const Address &rhs) const {
     socklen_t minlen = std::min(getAddrlen(), rhs.getAddrlen());
     int result = memcmp(getAddr(), rhs.getAddr(), minlen);
-    if (result < 0) {
+    if (result < 0) {// 小于rhs
         return true;
-    } else if (result > 0) {
+    } else if (result > 0) {// 大于rhs
         return false;
-    } else if (getAddrlen() < rhs.getAddrlen()) {
+    } else if (getAddrlen() < rhs.getAddrlen()) {// 相等比较地址长度
         return true;
     } else {
         return false;
@@ -243,6 +250,7 @@ IPv4Address::ptr IPv4Address::Create(const char *address, uint16_t port) {
     // 将文本地址转化成ip地址
     IPv4Address::ptr rt(new IPv4Address);
     rt->m_addr.sin_port = byteswapOnLittleEndian(port);
+    // 将address转换为二进制形式存入
     int result = inet_pton(AF_INET, address, &rt->m_addr.sin_addr);
     if (result <= 0) {// 转换失败，输出日志
         SYLAR_LOG_ERROR(g_logger)
@@ -274,7 +282,7 @@ std::ostream &IPv4Address::insert(std::ostream &os) const {
 
 IPAddress::ptr IPv4Address::broadcastAddress(uint32_t prefix_len) {
     if (prefix_len > 32) { return nullptr; }
-    sockaddr_in baddr(m_addr);
+    sockaddr_in baddr(m_addr);// 根据m_addr创建新的独立的结构体
     baddr.sin_addr.s_addr |=
             byteswapOnLittleEndian(CreateMask<uint32_t>(prefix_len));// 掩码操作
     return std::make_shared<IPv4Address>(baddr);
@@ -337,8 +345,13 @@ std::ostream &IPv6Address::insert(std::ostream &os) const {
     auto *addr = (uint16_t *) m_addr.sin6_addr.s6_addr;
     bool used_zeros = false;
     for (size_t i = 0; i < 8; ++i) {
-        if (addr[i] == 0 && !used_zeros) { continue; }
+        // 零压缩法
+        if (addr[i] == 0 && !used_zeros) {
+            // 当前位为0，且没用过0表示，继续下次循环
+            continue;
+        }
         if (i && addr[i - 1] == 0 && !used_zeros) {
+            // i真，前一个位置为0，并且没有用过0表示
             os << ":";
             used_zeros = true;
         }
@@ -352,6 +365,7 @@ std::ostream &IPv6Address::insert(std::ostream &os) const {
 
 IPAddress::ptr IPv6Address::broadcastAddress(uint32_t prefix_len) {
     sockaddr_in6 baddr(m_addr);
+    // prefix_len 子网掩码位数
     baddr.sin6_addr.s6_addr[prefix_len / 8] |=
             CreateMask<uint8_t>(prefix_len % 8);
     for (int i = prefix_len / 8 + 1; i < 16; ++i) {
@@ -369,7 +383,7 @@ IPAddress::ptr IPv6Address::networkAddress(uint32_t prefix_len) {
     return std::make_shared<IPv6Address>(baddr);
 }
 IPAddress::ptr IPv6Address::subnetMask(uint32_t prefix_len) {
-    sockaddr_in6 subnet(m_addr);
+    sockaddr_in6 subnet;
     memset(&subnet, 0, sizeof(subnet));
     subnet.sin6_family = AF_INET6;
     subnet.sin6_addr.s6_addr[prefix_len / 8] =
@@ -387,12 +401,16 @@ void IPv6Address::setPort(uint16_t v) {
 }
 
 // UnixAddress
-static const size_t MAX_PATH_LEN = sizeof(((sockaddr_un *) nullptr)->sun_path) - 1;
+static const size_t MAX_PATH_LEN =
+        sizeof(((sockaddr_un *) nullptr)->sun_path) - 1;
+// 将空指针转换成sockaddr_un类型。获得sun_path字段的大小，
+// 由于空指针转换后不指向有效内存，因此这个大小实际上是sun_path字段的最大长度，-1表示实际长度
 // sun_path 是字符数组，末尾有个\0;
 UnixAddress::UnixAddress() {
     memset(&m_addr, 0, sizeof(m_addr));// 置空
     m_addr.sun_family = AF_UNIX;
     m_length = offsetof(sockaddr_un, sun_path) + MAX_PATH_LEN;
+    //offsetof(sockaddr_un, sun_path)返回的值是 sun_path 相对于 sockaddr_un 结构体起始地址的偏移量，以字节为单位
 }
 UnixAddress::UnixAddress(const std::string &path) {
     memset(&m_addr, 0, sizeof(m_addr));
