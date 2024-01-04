@@ -88,6 +88,7 @@ bool Socket::getOption(int level, int option, void *result,
 }
 bool Socket::setOption(int level, int option, const void *result,
                        socklen_t len) const {
+    // setsockopt 用于设置套接字选项，可以影响套接字的行为，通常在套接字创建后，绑定之前或则和连接之前使用。
     if (setsockopt(m_sock, level, option, result, (socklen_t) len)) {
         SYLAR_LOG_DEBUG(socket_logger)
                 << "getOption sock=" << m_sock << " level=" << level

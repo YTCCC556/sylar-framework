@@ -31,6 +31,7 @@ set(LIB_SRC
         src/fd_manager.cpp
         src/address.cpp
         src/socket.cpp
+        src/bytearray.cpp
 )
 
 add_library(framework SHARED ${LIB_SRC})

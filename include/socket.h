@@ -9,7 +9,6 @@
 #include "noncopyable.h"
 #include <memory>
 
-
 namespace ytccc {
 class Socket : public std::enable_shared_from_this<Socket>, Noncopyable {
 public:
@@ -20,11 +19,11 @@ public:
 
     static Socket::ptr CreateTCP(ytccc::Address::ptr address);
     static Socket::ptr CreateUDP(ytccc::Address::ptr address);
-    static Socket::ptr CreateTCPSocket();
+    static Socket::ptr CreateTCPSocket();// 创建ipv4 tcp socket
     static Socket::ptr CreateUDPSocket();
     static Socket::ptr CreateTCPSocket6();
     static Socket::ptr CreateUDPSocket6();
-    static Socket::ptr CreateUnixTCPSocket();
+    static Socket::ptr CreateUnixTCPSocket();// unix tcp socket
     static Socket::ptr CreateUnixUDPSocket();
 
     Socket(int family, int type, int protocol = 0);
@@ -36,6 +35,9 @@ public:
     int64_t getRecvTimeout() const;
     bool setRecvTimeout(int64_t v);
 
+    /**
+    * @brief 获取sockopt模板 @see getsockopt
+    */
     bool getOption(int level, int option, void *result, socklen_t *len) const;
     template<class T>
     bool getOption(int level, int option, T &result) {
@@ -49,29 +51,29 @@ public:
         return setOption(level, option, &value, sizeof(T));
     }
 
-    Socket::ptr accept() const;
+    Socket::ptr accept() const;// 接收connect连接
 
-    bool bind(const Address::ptr &addr);
-    bool connect(const Address::ptr &addr, uint64_t timeout_ms = -1);
-    bool listen(int backlog = SOMAXCONN) const;
-    bool close();
+    bool bind(const Address::ptr &addr);// 绑定地址
+    bool connect(const Address::ptr &addr, uint64_t timeout_ms = -1);// 连接地址
+    bool listen(int backlog = SOMAXCONN) const;// 监听地址
+    bool close();                              // 关闭连接
 
-    int send(const void *buffer, size_t length, int flags = 0) const;
+    int send(const void *buffer, size_t length, int flags = 0) const;// 发送数据
     int send(const iovec *buffers, size_t length, int flags = 0) const;
     int sendTo(const void *buffer, size_t length, const Address::ptr &to,
                int flags = 0) const;
     int sendTo(const iovec *buffers, size_t length, const Address::ptr &to,
                int flags = 0) const;
 
-    int recv(void *buffer, size_t length, int flags = 0) const;
+    int recv(void *buffer, size_t length, int flags = 0) const;// 接受数据
     int recv(iovec *buffers, size_t length, int flags = 0) const;
     int recvFrom(void *buffer, size_t length, const Address::ptr &from,
                  int flags = 0) const;
     int recvFrom(iovec *buffers, size_t length, const Address::ptr &from,
                  int flags = 0) const;
 
-    Address::ptr getRemoteAddress();
-    Address::ptr getLocalAddress();
+    Address::ptr getRemoteAddress(); // 获取远端地址
+    Address::ptr getLocalAddress();// 获取本地地址
 
     int getFamily() const { return m_family; }
     int getType() const { return m_type; }
@@ -95,14 +97,14 @@ private:
     void newSock();
 
 private:
-    int m_sock;
-    int m_family;
-    int m_type;
-    int m_protocol;
-    bool m_isConnected;
+    int m_sock; // sock句柄
+    int m_family; // 协议簇
+    int m_type; // 类型
+    int m_protocol; // 协议
+    bool m_isConnected; // 是否连接
 
-    Address::ptr m_localAddress;
-    Address::ptr m_RemoteAddress;
+    Address::ptr m_localAddress; // 本地地址
+    Address::ptr m_RemoteAddress; // 远端地址
 };
 }// namespace ytccc
 
