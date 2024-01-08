@@ -5,6 +5,7 @@
 #ifndef SYLAR_FRAMEWORK_MACRO_H
 #define SYLAR_FRAMEWORK_MACRO_H
 
+#include "log.h"
 #include "util.h"
 #include <cassert>
 #include <string>
@@ -13,8 +14,8 @@
     {                                                                          \
         if (!(x)) {                                                            \
             SYLAR_LOG_ERROR(SYLAR_LOG_ROOT())                                  \
-                    << "ASSERTION: " #x << "\nbacktrace:\n"                    \
-                    << ytccc::BacktraceToString(100, 2, "    ");               \
+                << "ASSERTION: " #x << "\nbacktrace:\n"                        \
+                << ytccc::BacktraceToString(100, 2, "    ");                   \
             assert(x);                                                         \
         }                                                                      \
     }
@@ -23,9 +24,9 @@
     {                                                                          \
         if (!(x)) {                                                            \
             SYLAR_LOG_ERROR(SYLAR_LOG_ROOT())                                  \
-                    << "ASSERTION:" #x << "\n"                                 \
-                    << w << "\nbacktrace:\n"                                   \
-                    << ytccc::BacktraceToString(100, 2, "    ");               \
+                << "ASSERTION:" #x << "\n"                                     \
+                << w << "\nbacktrace:\n"                                       \
+                << ytccc::BacktraceToString(100, 2, "    ");                   \
             assert(x);                                                         \
         }                                                                      \
     }

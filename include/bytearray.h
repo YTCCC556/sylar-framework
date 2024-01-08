@@ -5,9 +5,11 @@
 #ifndef YTCCC_MODULE_BYTEARRAY_H
 #define YTCCC_MODULE_BYTEARRAY_H
 
+#include <cstdint>
 #include <memory>
-#include <stdint.h>
 #include <string>
+#include <sys/socket.h>
+#include <vector>
 
 namespace ytccc {
 class ByteArray {
@@ -43,8 +45,8 @@ public:
     void writeInt64(int64_t value);
     void writeUint64(uint64_t value);
 
-    void writeFloat( float value);
-    void writeDouble( double value);
+    void writeFloat(float value);
+    void writeDouble(double value);
     // length:int16,data
     void writeStringF16(const std::string &value);
     // length:int32,data
@@ -86,6 +88,7 @@ public:
     void clear();
     void write(const void *buf, size_t size);
     void read(void *buf, size_t size);
+    void read(void *buf, size_t size, size_t position) const;
     size_t getPosition() const { return m_position; }
     void setPosition(size_t v);
 
@@ -94,8 +97,18 @@ public:
 
     size_t getBaseSize() const { return m_baseSize; }
     size_t getReadSize() const { return m_size - m_position; }
+    size_t getSize() const { return m_size; }
     bool isLittleEndian() const;
     bool setIsLittleEndian(bool val);
+
+    std::string toString() const;
+    std::string toHexString() const;
+
+    uint64_t getReadBuffers(std::vector<iovec> &buffers,
+                            uint64_t len = ~0) const;
+    uint64_t getReadBuffers(std::vector<iovec> &buffers, uint64_t len,
+                            uint64_t position) const;
+    uint64_t getWriteBuffers(std::vector<iovec> &buffers, uint64_t len);
 
 private:
     void addCapacity(size_t size);

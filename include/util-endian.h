@@ -13,7 +13,7 @@
 #include <cstdint>
 
 namespace ytccc {
-// 一下函数为自定义，不为sylar原本的转换函数。
+/*// 一下函数为自定义，不为sylar原本的转换函数。
 uint32_t convertToLittleEndianIPv4(const char *ipAddress) {
     boost::asio::ip::address_v4 addr =
             boost::asio::ip::address_v4::from_string(ipAddress);
@@ -27,7 +27,7 @@ uint32_t convertToLittleEndianIPv4(uint32_t ipAddress) {
 }
 uint32_t convertToLittleEndianPort(uint32_t port) {
     return boost::asio::detail::socket_ops::host_to_network_short(port);
-}
+}*/
 /**
  * @brief 8字节类型的字节序转化
  */
