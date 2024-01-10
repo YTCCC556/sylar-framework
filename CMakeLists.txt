@@ -7,7 +7,7 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_CXX_STANDARD 17)
 
 include_directories(include)
-
+include_directories(http)
 # 引入boost
 find_package(Boost COMPONENTS REQUIRED)
 if (Boost_FOUND)
@@ -32,6 +32,7 @@ set(LIB_SRC
         src/address.cpp
         src/socket.cpp
         src/bytearray.cpp
+        http/http.cpp
 )
 
 add_library(framework SHARED ${LIB_SRC})
