@@ -33,6 +33,9 @@ set(LIB_SRC
         src/socket.cpp
         src/bytearray.cpp
         http/http.cpp
+        http/http11_parser.cc
+        http/httpclient_parser.cc
+        http/http_parser.cpp
 )
 
 add_library(framework SHARED ${LIB_SRC})
