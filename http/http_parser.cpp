@@ -6,7 +6,7 @@
 #include "config.h"
 #include "log.h"
 #include "thread.h"
-#include <string.h>
+#include <cstring>
 
 namespace ytccc::http {
 
@@ -124,6 +124,10 @@ size_t HttpRequestParser::execute(char *data, size_t len) {
     return offset;
 }
 
+uint64_t HttpRequestParser::getContentLength() {
+    return m_data->getHeaderAs<uint64_t>("content-length", 0);
+}
+
 void on_response_reason(void *data, const char *at, size_t length) {
     HttpResponseParser *parser = static_cast<HttpResponseParser *>(data);
     parser->getData()->setReason(std::string(at, length));
@@ -184,5 +188,8 @@ size_t HttpResponseParser::execute(char *data, size_t len) {
     size_t offset = httpclient_parser_execute(&m_parser, data, len, 0);
     memmove(data, data + offset, (len - offset));
     return offset;
+}
+uint64_t HttpResponseParser::getContentLength(){
+
 }
 }// namespace ytccc::http

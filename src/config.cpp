@@ -3,6 +3,8 @@
 //
 
 #include "config.h"
+#include "yaml-cpp/yaml.h"
+#include <string>
 
 namespace ytccc {
 
@@ -12,7 +14,7 @@ ListAllMember(const std::string &prefix, const YAML::Node &node,
     if (prefix.find_first_not_of("qwertyuiopasdfghjklzxcvbnm._0123456789") !=
         std::string::npos) {
         SYLAR_LOG_INFO(SYLAR_LOG_ROOT())
-                << "Config invaild name:" << prefix << ":" << node;
+            << "Config invaild name:" << prefix << ":" << node;
         return;
     }
     output.emplace_back(prefix, node);
@@ -54,10 +56,10 @@ void Config::LoadFromYaml(const YAML::Node &root) {
     }
 }
 
-void Config::Visit(const std::function<void(ConfigVarBase::ptr)>& cb) {
+void Config::Visit(const std::function<void(ConfigVarBase::ptr)> &cb) {
     MutexType::ReadLock lock(GetMutex());
     ConfigVarMap &m = GetDatas();
-    for (auto & it : m) { cb(it.second); }
+    for (auto &it: m) { cb(it.second); }
 }
 
 }// namespace ytccc

@@ -22,7 +22,7 @@ public:
     size_t execute(char *data, size_t len);
     HttpRequest::ptr getData() { return m_data; }
     void setError(int v) { m_error = v; }
-
+    uint64_t getContentLength();
 private:
     http_parser m_parser;
     HttpRequest::ptr m_data;
@@ -42,6 +42,7 @@ public:
     size_t execute(char *data, size_t len);
     HttpResponse::ptr getData() const { return m_data; }
     void setError(int v) { m_error = v; }
+    uint64_t getContentLength();
 
 private:
     httpclient_parser m_parser;

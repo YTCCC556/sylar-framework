@@ -346,8 +346,8 @@ public:
              * 但是map中配置项的参数类型和传入的默认值的参数类型不一致，返回nullptr
              * 否者返回正确的配置参数 */
             if (tmp) {
-                SYLAR_LOG_INFO(SYLAR_LOG_ROOT())
-                        << "Lookup name = " << name << " exists";
+                // SYLAR_LOG_INFO(SYLAR_LOG_ROOT())
+                //         << "Lookup name = " << name << " exists";
                 return tmp;
             } else {
                 SYLAR_LOG_ERROR(SYLAR_LOG_ROOT())

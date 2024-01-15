@@ -218,7 +218,7 @@ public:
         return checkGetAs(m_headers, key, val, def);
     }
     template<class T>
-    T getHeaderAs(const std::string &key, T &val, const T &def = T()) {
+    T getHeaderAs(const std::string &key, const T &def = T()) {
         return getAs(m_headers, key, def);
     }
     template<class T>
