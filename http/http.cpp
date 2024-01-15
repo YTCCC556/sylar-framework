@@ -104,7 +104,7 @@ bool HttpRequest::hasCookie(const std::string &key, std::string *val) {
     return true;
 }
 
-std::ostream &HttpRequest::dump(std::ostream &os) {
+std::ostream &HttpRequest::dump(std::ostream &os) const {
     // GET /uri HTTP/1.1
     // HOST: www.baidu.com
 
@@ -125,6 +125,11 @@ std::ostream &HttpRequest::dump(std::ostream &os) {
     }
     return os;
 }
+std::string HttpRequest::toString() const {
+    std::stringstream ss;
+    dump(ss);
+    return ss.str();
+}
 
 HttpResponse::HttpResponse(uint8_t version, bool close)
     : m_status(HttpStatus::OK), m_version(version), m_close(close) {}
@@ -137,7 +142,7 @@ void HttpResponse::setHeader(const std::string &key, const std::string &val) {
     m_headers[key] = val;
 }
 void HttpResponse::delHeader(const std::string &key) { m_headers.erase(key); }
-std::ostream &HttpResponse::dump(std::ostream &os) {
+std::ostream &HttpResponse::dump(std::ostream &os) const {
     os << "HTTP/" << ((uint32_t) (m_version >> 4)) << "."
        << ((uint32_t) (m_version & 0x0F)) << " " << (uint32_t) m_status << " "
        << (m_reason.empty() ? HttpStatusToString(m_status) : m_reason)
@@ -155,5 +160,10 @@ std::ostream &HttpResponse::dump(std::ostream &os) {
         os << "\r\n";
     }
     return os;
+}
+std::string HttpResponse::toString() const {
+    std::stringstream ss;
+    dump(ss);
+    return ss.str();
 }
 }// namespace ytccc::http

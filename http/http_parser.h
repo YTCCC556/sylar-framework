@@ -19,7 +19,7 @@ public:
 
     int isFinished();
     int hasError();
-    size_t execute( char *data, size_t len) ;
+    size_t execute(char *data, size_t len);
     HttpRequest::ptr getData() { return m_data; }
     void setError(int v) { m_error = v; }
 
@@ -37,10 +37,11 @@ public:
     typedef std::shared_ptr<HttpResponseParser> ptr;
     HttpResponseParser();
 
-    int isFinished() ;
-    int hasError() ;
-    size_t execute( char *data, size_t len, size_t off) ;
+    int isFinished();
+    int hasError();
+    size_t execute(char *data, size_t len);
     HttpResponse::ptr getData() const { return m_data; }
+    void setError(int v) { m_error = v; }
 
 private:
     httpclient_parser m_parser;

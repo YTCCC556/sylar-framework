@@ -237,9 +237,10 @@ public:
     T getCookieAs(const std::string &key, T &val, const T &def = T()) {
         return getAs(m_cookie, key, def);
     }
-    std::ostream &dump(std::ostream &os);
+    std::ostream &dump(std::ostream &os) const;
     bool isClose() const { return m_close; }
     void setClose(const bool v) { m_close = v; }
+    std::string toString() const;
 
 private:
     HttpMethod m_method;
@@ -281,7 +282,8 @@ public:
     void setHeader(const std::string &key, const std::string &val);
     void delHeader(const std::string &key);
 
-    std::ostream &dump(std::ostream &os);
+    std::ostream &dump(std::ostream &os) const;
+    std::string toString() const;
 
     template<class T>
     bool checkGetHeadersAs(const std::string &key, T &val, const T &def = T()) {
