@@ -5,7 +5,6 @@
 #ifndef YTCCC_MODULE_HTTP_H
 #define YTCCC_MODULE_HTTP_H
 
-
 #include "log.h"
 #include <boost/lexical_cast.hpp>
 #include <iostream>
@@ -237,6 +236,7 @@ public:
     T getCookieAs(const std::string &key, T &val, const T &def = T()) {
         return getAs(m_cookie, key, def);
     }
+
     std::ostream &dump(std::ostream &os) const;
     bool isClose() const { return m_close; }
     void setClose(const bool v) { m_close = v; }
