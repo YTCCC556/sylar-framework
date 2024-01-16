@@ -40,7 +40,7 @@ public:
     void writeFuint32(uint32_t value);
     void writeFint64(int64_t value);
     void writeFuint64(uint64_t value);
-    // 可变长度
+    // 可变长度 进行特殊编码
     void writeInt32(int32_t value);
     void writeUint32(uint32_t value);
     void writeInt64(int64_t value);
@@ -87,14 +87,14 @@ public:
 
     // 内部操作
     void clear(); // 保留根节点，去除其他节点。
-    void write(const void *buf, size_t size);
-    void read(void *buf, size_t size);
+    void write(const void *buf, size_t size); // 把数据写入链表中
+    void read(void *buf, size_t size); // 读取size个数据到buf中
     void read(void *buf, size_t size, size_t position) const;
     size_t getPosition() const { return m_position; }
-    void setPosition(size_t v);
+    void setPosition(size_t v); // 设置当前位置以及当前指针
 
-    bool writeToFile(const std::string &name) const;
-    bool readFromFile(const std::string &name);
+    bool writeToFile(const std::string &name) const; // 将从当前位置开始到末尾结束的数据写入文件
+    bool readFromFile(const std::string &name); //
 
     size_t getBaseSize() const { return m_baseSize; }
     size_t getReadSize() const { return m_size - m_position; }
@@ -102,7 +102,7 @@ public:
     bool isLittleEndian() const;
     bool setIsLittleEndian(bool val);
 
-    std::string toString() const;
+    std::string toString() const; // 调用read函数
     std::string toHexString() const;
 
     uint64_t getReadBuffers(std::vector<iovec> &buffers,

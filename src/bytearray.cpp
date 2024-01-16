@@ -59,6 +59,7 @@ void ByteArray::writeFuint64(uint64_t value) {
 }
 // 可变长度
 static uint32_t EncodeZigzag32(const int32_t &v) {
+    // 转变成无符号
     if (v < 0) {// -1变成1
         return ((uint32_t) (-v) * 2) - 1;
     } else {// 1变成2
@@ -73,6 +74,7 @@ static uint64_t EncodeZigzag64(const int64_t &v) {
     }
 }
 static int32_t DecodeZigzag32(const uint32_t &v) {
+    // 从无符号转换成
     return (int32_t) ((v >> 1) ^ -(v & 1));
     // 先左移一位将乘2消去，再异或最后一位。
 }
@@ -86,11 +88,12 @@ void ByteArray::writeInt32(int32_t value) {
 void ByteArray::writeUint32(uint32_t value) {
     uint8_t tmp[5];
     uint8_t i = 0;
-    while (value >= 0x80) {
+    while (value >= 0x80) {// 0x80 二进制为1000 0000
         tmp[i++] = (value & 0x7f) | 0x80;
-        value >>= 7;
-    }
-    tmp[i++] = value;
+        // 0x7f:0111 1111，与上0x7f取低七位数字，或上0x80，添加标记位
+        value >>= 7;// 右移七位，处理更高位数字
+    }//8位二进制，最高位表示是否有后续字节，其余7位存储数据。
+    tmp[i++] = value; // 将剩余不足8位数字存入
     write(tmp, i);
 }
 void ByteArray::writeInt64(int64_t value) {
@@ -257,84 +260,90 @@ void ByteArray::clear() {// 只留一个节点，释放其他节点。
     m_root->next = nullptr;
 }
 void ByteArray::write(const void *buf, size_t size) {
-    if (size == 0) return;// check
-    addCapacity(size);    // check
-    size_t npos = m_position % m_baseSize;
-    size_t ncap = m_cur->size - npos;
-    size_t bpos = 0;
+    if (size == 0) return;                 // check
+    addCapacity(size);                     // check
+    size_t n_pos = m_position % m_baseSize;// 块内位置
+    size_t n_cap = m_cur->size - n_pos;    // 块内容量
+    size_t b_pos = 0;                      // 数据偏移
 
     while (size > 0) {
-        if (ncap >= size) {
-            memcpy(m_cur->ptr + npos, (const char *) buf + bpos, size);
-            if (m_cur->size == (npos + size)) { m_cur = m_cur->next; }
-            m_position += size;
-            bpos += size;
+        if (n_cap >= size) {// 块内容量大于数据大小，不需要其他块
+            memcpy(m_cur->ptr + n_pos, (const char *) buf + b_pos, size);
+            if (m_cur->size == (n_pos + size)) {
+                m_cur = m_cur->next;
+            }                  // 当前块已满
+            m_position += size;// 位置变动
+            b_pos += size;
             size = 0;
-        } else {
-            memcpy(m_cur->ptr + npos, (const char *) buf + bpos, ncap);
-            m_position += ncap;
-            bpos += ncap;
-            size -= ncap;
+        } else {// 块容量小于数据大小
+            memcpy(m_cur->ptr + n_pos, (const char *) buf + b_pos, n_cap);
+            m_position += n_cap;
+            b_pos += n_cap;
+            size -= n_cap;
             m_cur = m_cur->next;
-            ncap = m_cur->size;
-            npos = 0;
+            n_cap = m_cur->size;
+            n_pos = 0;
+            // n_cap = 0;
         }
     }
     if (m_position > m_size) { m_size = m_position; }
 }
 void ByteArray::read(void *buf, size_t size) {
-    if (size > getReadSize()) { throw std::out_of_range("not enough len"); }
-    size_t npos = m_position % m_baseSize;
-    size_t ncap = m_cur->size - npos;
-    size_t bpos = 0;
+    // getReadSize():m_size - m_position
+    if (size > getReadSize()) {
+        throw std::out_of_range("not enough len");
+    }                                      //没有这么长的数据
+    size_t n_pos = m_position % m_baseSize;// 块内位置
+    size_t n_cap = m_cur->size - n_pos;    // 块内容量
+    size_t b_pos = 0;
     while (size > 0) {
-        if (ncap >= size) {
-            memcpy((char *) buf + bpos, m_cur->ptr + npos, size);
-            if (m_cur->size == (npos + size)) { m_cur = m_cur->next; }
+        if (n_cap >= size) {
+            memcpy((char *) buf + b_pos, m_cur->ptr + n_pos, size);
+            if (m_cur->size == (n_pos + size)) { m_cur = m_cur->next; }
             m_position += size;
-            bpos += size;
+            b_pos += size;
             size = 0;
-
         } else {
-            memcpy((char *) buf + bpos, m_cur->ptr + npos, ncap);
-            m_position += ncap;
-            bpos += ncap;
-            size -= ncap;
+            memcpy((char *) buf + b_pos, m_cur->ptr + n_pos, n_cap);
+            m_position += n_cap;
+            b_pos += n_cap;
+            size -= n_cap;
             m_cur = m_cur->next;
-            ncap = m_cur->size;
-            npos = 0;
+            n_cap = m_cur->size;
+            n_pos = 0;
         }
     }
+    // read(buf, size, m_position);
 }
 void ByteArray::read(void *buf, size_t size, size_t position) const {
     if (size > (m_size - position)) {
-        throw std::out_of_range("not enough len");
+        throw std::out_of_range("not enough len data");
     }
-    size_t npos = position % m_baseSize;
-    size_t ncap = m_cur->size - npos;
-    size_t bpos = 0;
+    size_t n_pos = position % m_baseSize;
+    size_t n_cap = m_cur->size - n_pos;
+    size_t b_pos = 0;
     Node *cur = m_cur;
     while (size > 0) {
-        if (ncap >= size) {
-            memcpy((char *) buf + bpos, cur->ptr + npos, size);
-            if (cur->size == (npos + size)) { cur = cur->next; }
+        if (n_cap >= size) {
+            memcpy((char *) buf + b_pos, cur->ptr + n_pos, size);
+            if (cur->size == (n_pos + size)) { cur = cur->next; }
             position += size;
-            bpos += size;
+            b_pos += size;
             size = 0;
 
         } else {
-            memcpy((char *) buf + bpos, cur->ptr + npos, ncap);
-            position += ncap;
-            bpos += ncap;
-            size -= ncap;
+            memcpy((char *) buf + b_pos, cur->ptr + n_pos, n_cap);
+            position += n_cap;
+            b_pos += n_cap;
+            size -= n_cap;
             cur = cur->next;
-            ncap = cur->size;
-            npos = 0;
+            n_cap = cur->size;
+            n_pos = 0;
         }
     }
 }
 void ByteArray::setPosition(size_t v) {
-    if (v > m_size) { throw std::out_of_range("set position out of range"); }
+    if (v > m_size) throw std::out_of_range("set position out of range");
     m_position = v;
     m_cur = m_root;
     while (v > m_cur->size) {
@@ -346,20 +355,21 @@ void ByteArray::setPosition(size_t v) {
 
 bool ByteArray::writeToFile(const std::string &name) const {
     std::ofstream ofs;
-    ofs.open(name, std::ios::trunc | std::ios::binary);
+    ofs.open(name, std::ios::trunc | std::ios::binary);//删除内容并打开
     if (!ofs) {
         SYLAR_LOG_ERROR(g_logger)
             << "writeToFile name=" << name << " error, error=" << errno
             << " err_str=" << strerror(errno);
         return false;
     }
-    auto read_size = (int64_t) getReadSize();
+    auto read_size = (int64_t) getReadSize();// 当前位置开始到结束数据的长度。
     int64_t pos = m_position;
     Node *cur = m_cur;
     while (read_size > 0) {
-        int diff = pos % m_baseSize;
-        int64_t len =
-            (read_size > (int64_t) m_baseSize ? m_baseSize : read_size) - diff;
+        int diff = pos % m_baseSize;// 数据偏移
+        int64_t len = (int64_t) (read_size > (int64_t) m_baseSize ? m_baseSize
+                                                                  : read_size) -
+                      diff;
         ofs.write(cur->ptr + diff, len);
         cur = cur->next;
         pos += len;
@@ -379,9 +389,9 @@ bool ByteArray::readFromFile(const std::string &name) {
     }
     std::shared_ptr<char> buff(new char[m_baseSize],
                                [](char *ptr) { delete[] ptr; });
-    while (!ifs.eof()) {
-        ifs.read(buff.get(), m_baseSize);
-        write(buff.get(), ifs.gcount());
+    while (!ifs.eof()) {                 // 文件流是否到达文件的末尾
+        ifs.read(buff.get(), m_baseSize);// 读取指定大小数据到字符数组中
+        write(buff.get(), ifs.gcount());// 将读取的数据写入链表中
     }
     // SYLAR_LOG_INFO(g_logger) << "readFromFile success";
     return true;
@@ -503,7 +513,7 @@ uint64_t ByteArray::getWriteBuffers(std::vector<iovec> &buffers, uint64_t len) {
     return len;
 }
 void ByteArray::addCapacity(size_t size) {
-    size_t old_cap = getCapacity(); // 剩余容量
+    size_t old_cap = getCapacity();// 剩余容量
     if (size == 0 || old_cap >= size) return;// check 剩余容量够用，不用重新增加
     size -= old_cap;                         // 超出范围大小
     size_t count =
@@ -518,7 +528,7 @@ void ByteArray::addCapacity(size_t size) {
         tmp->next = new Node(m_baseSize);
         if (first == nullptr) first = tmp->next;// 若为空，
         tmp = tmp->next;
-        m_capacity += m_baseSize; // 已有数据增加
+        m_capacity += m_baseSize;// 已有数据增加
     }
     if (old_cap == 0) { m_cur = first; }// 之前已经用完的情况下，可能会指向空
 }
