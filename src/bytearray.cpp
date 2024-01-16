@@ -257,8 +257,8 @@ void ByteArray::clear() {// 只留一个节点，释放其他节点。
     m_root->next = nullptr;
 }
 void ByteArray::write(const void *buf, size_t size) {
-    if (size == 0) return;
-    addCapacity(size);
+    if (size == 0) return;// check
+    addCapacity(size);    // check
     size_t npos = m_position % m_baseSize;
     size_t ncap = m_cur->size - npos;
     size_t bpos = 0;
@@ -503,19 +503,22 @@ uint64_t ByteArray::getWriteBuffers(std::vector<iovec> &buffers, uint64_t len) {
     return len;
 }
 void ByteArray::addCapacity(size_t size) {
-    if (size == 0 || getCapacity() >= size) return;
-    size_t old_cap = getCapacity();
-    size -= old_cap;
+    size_t old_cap = getCapacity(); // 剩余容量
+    if (size == 0 || old_cap >= size) return;// check 剩余容量够用，不用重新增加
+    size -= old_cap;                         // 超出范围大小
     size_t count =
-        (size / m_baseSize) + ((size % m_baseSize) > old_cap ? 1 : 0);
+        ceil((double) size / (double) m_baseSize);// 向上取整，应该是所需块数量
+    // size_t count =
+    //     (size / m_baseSize) + ((size % m_baseSize) > old_cap ? 1 : 0);
+    // count 1：
     Node *tmp = m_root;
-    while (tmp->next) { tmp = tmp->next; }
+    while (tmp->next) { tmp = tmp->next; }// 末尾节点
     Node *first = nullptr;
     for (size_t i = 0; i < count; ++i) {
         tmp->next = new Node(m_baseSize);
-        if (!first) first = tmp->next;
+        if (first == nullptr) first = tmp->next;// 若为空，
         tmp = tmp->next;
-        m_capacity += m_baseSize;
+        m_capacity += m_baseSize; // 已有数据增加
     }
     if (old_cap == 0) { m_cur = first; }// 之前已经用完的情况下，可能会指向空
 }

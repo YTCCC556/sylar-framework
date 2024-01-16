@@ -260,7 +260,7 @@ private:
 class HttpResponse {
 public:
     typedef std::shared_ptr<HttpResponse> ptr;
-    typedef std::map<std::string, std::string, CaseInsensitiveLess> MapType;
+    typedef std::map<std::string, std::string, CaseInsensitiveLess> MapType; // map自定义比较函数
     HttpResponse(uint8_t version = 0x11, bool close = true);
 
     HttpStatus getStatus() const { return m_status; }

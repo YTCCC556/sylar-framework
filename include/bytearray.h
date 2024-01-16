@@ -17,17 +17,18 @@ public:
     typedef std::shared_ptr<ByteArray> ptr;
 
     struct Node {
-        Node(size_t s);
-        Node();
-        ~Node();
+        Node(size_t s);//新建指针指向字符类型，初始化next指针，大小
+        Node();        // 指针指向空，其余同上
+        ~Node();       // 释放指针
 
         char *ptr;
         size_t size;
         Node *next;
     };
 
-    ByteArray(size_t base_size = 4096);// base_size 链表长度
-    ~ByteArray();
+    ByteArray(size_t base_size = 4096);
+    // base_size 链表长度,初始化数据，块大小，块数量，数据数量，当前位置，根块指针，当前块指针
+    ~ByteArray(); // 从根块开始释放所有块指针。
 
     //write
     // 固定长度
@@ -85,7 +86,7 @@ public:
     std::string readStringVint();
 
     // 内部操作
-    void clear();
+    void clear(); // 保留根节点，去除其他节点。
     void write(const void *buf, size_t size);
     void read(void *buf, size_t size);
     void read(void *buf, size_t size, size_t position) const;
@@ -111,17 +112,17 @@ public:
     uint64_t getWriteBuffers(std::vector<iovec> &buffers, uint64_t len);
 
 private:
-    void addCapacity(size_t size);
-    size_t getCapacity() const { return m_capacity - m_position; }
+    void addCapacity(size_t size); // 增加容量，根据数据大小，增加块数量。注意容量位置
+    size_t getCapacity() const { return m_capacity - m_position; } // 剩余容量
 
 private:
-    size_t m_baseSize;
-    size_t m_size;
-    size_t m_position;
-    size_t m_capacity;
-    int m_endian;
-    Node *m_root;
-    Node *m_cur;
+    size_t m_baseSize;// 内存块大小
+    size_t m_size;    // 当前数据大小
+    size_t m_position;// 操作位置
+    size_t m_capacity;// 已有数据大小
+    int m_endian;     // 大小端
+    Node *m_root;     // 第一个内存块指针
+    Node *m_cur;      // 当前内存块指针
 };
 }// namespace ytccc
 

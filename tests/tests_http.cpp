@@ -20,7 +20,7 @@ void test_resp() {
 }
 
 int main(int argc, char **argv) {
-    // test_req();
+    test_req();
     test_resp();
     return 0;
 }
