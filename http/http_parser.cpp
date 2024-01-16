@@ -167,7 +167,7 @@ void on_response_http_field(void *data, const char *field, size_t flen,
                                  std::string(value, vlen));
 }
 // HttpResponseParser
-HttpResponseParser::HttpResponseParser() {
+HttpResponseParser::HttpResponseParser() : m_error(0) {
     m_data.reset(new ytccc::http::HttpResponse);
     httpclient_parser_init(&m_parser);
     m_parser.reason_phrase = on_response_reason;
@@ -177,6 +177,7 @@ HttpResponseParser::HttpResponseParser() {
     m_parser.header_done = on_response_header_done;
     m_parser.last_chunk = on_response_last_chunk;
     m_parser.http_field = on_response_http_field;
+    m_parser.data = this;
 }
 int HttpResponseParser::isFinished() {
     return httpclient_parser_finish(&m_parser);
@@ -189,7 +190,7 @@ size_t HttpResponseParser::execute(char *data, size_t len) {
     memmove(data, data + offset, (len - offset));
     return offset;
 }
-uint64_t HttpResponseParser::getContentLength(){
-
+uint64_t HttpResponseParser::getContentLength() {
+    return m_data->getHeaderAs<uint64_t>("content-length", 0);
 }
 }// namespace ytccc::http

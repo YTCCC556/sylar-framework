@@ -15,7 +15,7 @@ HttpMethod StringToHttpMethod(const std::string &m) {
 
 HttpMethod CharsToHttpMethod(const char *m) {
 #define XX(num, name, string)                                                  \
-    if (strcmp(#string, m)) { return HttpMethod::name; }
+    if (strncmp(#string, m, strlen(#string)) == 0) { return HttpMethod::name; }
     HTTP_METHOD_MAP(XX)
 #undef XX
     return HttpMethod::INVALID_METHOD;
@@ -49,7 +49,7 @@ const char *HttpStatusToString(const HttpStatus &s) {
 
 bool CaseInsensitiveLess::operator()(const std::string &lhs,
                                      const std::string &rhs) const {
-    return strcasecmp(lhs.c_str(), rhs.c_str());
+    return strcasecmp(lhs.c_str(), rhs.c_str())<0;
 }
 
 HttpRequest::HttpRequest(uint8_t version, bool close)
