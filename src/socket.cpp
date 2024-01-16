@@ -14,35 +14,35 @@ namespace ytccc {
 ytccc::Logger::ptr socket_logger = SYLAR_LOG_NAME("system");
 
 Socket::ptr Socket::CreateTCP(ytccc::Address::ptr address) {
-    Socket::ptr sock(new Socket(address->getFamily(),TCP,0));
+    Socket::ptr sock(new Socket(address->getFamily(), TCP, 0));
     return sock;
 }
 Socket::ptr Socket::CreateUDP(ytccc::Address::ptr address) {
-    Socket::ptr sock(new Socket(address->getFamily(),UDP,0));
+    Socket::ptr sock(new Socket(address->getFamily(), UDP, 0));
     return sock;
 }
 Socket::ptr Socket::CreateTCPSocket() {
-    Socket::ptr sock(new Socket(IPv4,TCP,0));
+    Socket::ptr sock(new Socket(IPv4, TCP, 0));
     return sock;
 }
 Socket::ptr Socket::CreateUDPSocket() {
-    Socket::ptr sock(new Socket(IPv4,UDP,0));
+    Socket::ptr sock(new Socket(IPv4, UDP, 0));
     return sock;
 }
 Socket::ptr Socket::CreateTCPSocket6() {
-    Socket::ptr sock(new Socket(IPv6,TCP,0));
+    Socket::ptr sock(new Socket(IPv6, TCP, 0));
     return sock;
 }
 Socket::ptr Socket::CreateUDPSocket6() {
-    Socket::ptr sock(new Socket(IPv6,UDP,0));
+    Socket::ptr sock(new Socket(IPv6, UDP, 0));
     return sock;
 }
 Socket::ptr Socket::CreateUnixTCPSocket() {
-    Socket::ptr sock(new Socket(UNIX,TCP,0));
+    Socket::ptr sock(new Socket(UNIX, TCP, 0));
     return sock;
 }
 Socket::ptr Socket::CreateUnixUDPSocket() {
-    Socket::ptr sock(new Socket(UNIX,UDP,0));
+    Socket::ptr sock(new Socket(UNIX, UDP, 0));
     return sock;
 }
 
@@ -79,9 +79,9 @@ bool Socket::getOption(int level, int option, void *result,
                        socklen_t *len) const {
     if (getsockopt(m_sock, level, option, result, (socklen_t *) len)) {
         SYLAR_LOG_DEBUG(socket_logger)
-                << "getOption sock=" << m_sock << " level=" << level
-                << " option=" << option << " errno=" << errno
-                << " err_str=" << strerror(errno);
+            << "getOption sock=" << m_sock << " level=" << level
+            << " option=" << option << " errno=" << errno
+            << " err_str=" << strerror(errno);
         return false;
     }
     return true;
@@ -91,9 +91,9 @@ bool Socket::setOption(int level, int option, const void *result,
     // setsockopt 用于设置套接字选项，可以影响套接字的行为，通常在套接字创建后，绑定之前或则和连接之前使用。
     if (setsockopt(m_sock, level, option, result, (socklen_t) len)) {
         SYLAR_LOG_DEBUG(socket_logger)
-                << "getOption sock=" << m_sock << " level=" << level
-                << " option=" << option << " error=" << errno
-                << " err_str=" << strerror(errno);
+            << "getOption sock=" << m_sock << " level=" << level
+            << " option=" << option << " error=" << errno
+            << " err_str=" << strerror(errno);
         return false;
     }
     return true;
@@ -104,8 +104,8 @@ Socket::ptr Socket::accept() const {
     int newsock = ::accept(m_sock, nullptr, nullptr);
     if (newsock == -1) {
         SYLAR_LOG_ERROR(socket_logger)
-                << "accept(" << m_sock << ") errno=" << errno
-                << " err_str=" << strerror(errno);
+            << "accept(" << m_sock << ") errno=" << errno
+            << " err_str=" << strerror(errno);
         return nullptr;
     }
     if (sock->init(newsock)) { return sock; }
@@ -120,13 +120,12 @@ bool Socket::bind(const Address::ptr &addr) {
     if (SYLAR_UNLICKLY(addr->getFamily() !=
                        m_family)) {// sock类型和addr类型不同
         SYLAR_LOG_ERROR(socket_logger)
-                << "bind sock.family(" << m_family << ") addr.family("
-                << addr->getFamily()
-                << ") not equal, addr=" << addr->toString();
+            << "bind sock.family(" << m_family << ") addr.family("
+            << addr->getFamily() << ") not equal, addr=" << addr->toString();
     }
     if (::bind(m_sock, addr->getAddr(), addr->getAddrlen())) {
         SYLAR_LOG_ERROR(socket_logger)
-                << "bind errno=" << errno << " str_err" << strerror(errno);
+            << "bind errno=" << errno << " str_err" << strerror(errno);
         return false;
     }
     getLocalAddress();
@@ -142,15 +141,14 @@ bool Socket::connect(const Address::ptr &addr, uint64_t timeout_ms) {
     if (SYLAR_UNLICKLY(addr->getFamily() !=
                        m_family)) {// sock类型和addr类型不同
         SYLAR_LOG_ERROR(socket_logger)
-                << "connect sock.family(" << m_family << ") addr.family("
-                << addr->getFamily()
-                << ") not equal, addr=" << addr->toString();
+            << "connect sock.family(" << m_family << ") addr.family("
+            << addr->getFamily() << ") not equal, addr=" << addr->toString();
     }
     if (timeout_ms == (uint64_t) -1) {
         if (::connect(m_sock, addr->getAddr(), addr->getAddrlen())) {
             SYLAR_LOG_ERROR(socket_logger)
-                    << "sock=" << m_sock << " connect(" << addr->toString()
-                    << ") error=" << errno << " err_str=" << strerror(errno);
+                << "sock=" << m_sock << " connect(" << addr->toString()
+                << ") error=" << errno << " err_str=" << strerror(errno);
             close();
             return false;
         }
@@ -158,9 +156,9 @@ bool Socket::connect(const Address::ptr &addr, uint64_t timeout_ms) {
         if (::connect_with_timeout(m_sock, addr->getAddr(), addr->getAddrlen(),
                                    timeout_ms)) {
             SYLAR_LOG_ERROR(socket_logger)
-                    << "sock=" << m_sock << " connect(" << addr->toString()
-                    << ") timeout_ms= " << timeout_ms << "error=" << errno
-                    << "err_str" << strerror(errno);
+                << "sock=" << m_sock << " connect(" << addr->toString()
+                << ") timeout_ms= " << timeout_ms << "error=" << errno
+                << "err_str" << strerror(errno);
             close();
             return false;
         }
@@ -176,8 +174,8 @@ bool Socket::listen(int backlog) const {
         return false;
     }
     if (::listen(m_sock, backlog)) {
-        SYLAR_LOG_ERROR(socket_logger) << "listen error errno=" << errno
-                                       << " err_str=" << strerror(errno);
+        SYLAR_LOG_ERROR(socket_logger)
+            << "listen error errno=" << errno << " err_str=" << strerror(errno);
         return false;
     }
     return true;
@@ -285,8 +283,8 @@ Address::ptr Socket::getRemoteAddress() {
     socklen_t addrlen = result->getAddrlen();
     if (getpeername(m_sock, result->getAddr(), &addrlen)) {
         SYLAR_LOG_ERROR(socket_logger)
-                << "getpeername error sock=" << m_sock << " errno=" << errno
-                << " str_err=" << strerror(errno);
+            << "getpeername error sock=" << m_sock << " errno=" << errno
+            << " str_err=" << strerror(errno);
         return Address::ptr(new UnknownAddress(m_family));
     }
     if (m_family == AF_UNIX) {
@@ -316,8 +314,8 @@ Address::ptr Socket::getLocalAddress() {
     socklen_t addrlen = result->getAddrlen();
     if (getsockname(m_sock, result->getAddr(), &addrlen)) {
         SYLAR_LOG_ERROR(socket_logger)
-                << "getsockname error sock=" << m_sock << " errno=" << errno
-                << " str_err=" << strerror(errno);
+            << "getsockname error sock=" << m_sock << " errno=" << errno
+            << " str_err=" << strerror(errno);
         return Address::ptr(new UnknownAddress(m_family));
     }
     if (m_family == AF_UNIX) {
@@ -384,10 +382,13 @@ void Socket::newSock() {
         initSock();
     } else {
         SYLAR_LOG_ERROR(socket_logger)
-                << "socket(" << m_family << " , " << m_type << " , "
-                << m_protocol << ") errno=" << errno << " err_str"
-                << strerror(errno);
+            << "socket(" << m_family << " , " << m_type << " , " << m_protocol
+            << ") errno=" << errno << " err_str" << strerror(errno);
     }
+}
+
+std::ostream &operator<<(std::ostream &os, const Socket &addr) {
+    return addr.dump(os);
 }
 
 }// namespace ytccc

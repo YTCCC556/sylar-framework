@@ -72,8 +72,8 @@ public:
     int recvFrom(iovec *buffers, size_t length, const Address::ptr &from,
                  int flags = 0) const;
 
-    Address::ptr getRemoteAddress(); // 获取远端地址
-    Address::ptr getLocalAddress();// 获取本地地址
+    Address::ptr getRemoteAddress();// 获取远端地址
+    Address::ptr getLocalAddress(); // 获取本地地址
 
     int getFamily() const { return m_family; }
     int getType() const { return m_type; }
@@ -97,15 +97,17 @@ private:
     void newSock();
 
 private:
-    int m_sock; // sock句柄
-    int m_family; // 协议簇
-    int m_type; // 类型
-    int m_protocol; // 协议
-    bool m_isConnected; // 是否连接
+    int m_sock;        // sock句柄
+    int m_family;      // 协议簇
+    int m_type;        // 类型
+    int m_protocol;    // 协议
+    bool m_isConnected;// 是否连接
 
     Address::ptr m_localAddress; // 本地地址
-    Address::ptr m_RemoteAddress; // 远端地址
+    Address::ptr m_RemoteAddress;// 远端地址
 };
+
+std::ostream &operator<<(std::ostream &os, const Socket &addr);
 }// namespace ytccc
 
 
