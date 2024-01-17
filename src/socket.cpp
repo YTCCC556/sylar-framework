@@ -109,6 +109,7 @@ Socket::ptr Socket::accept() const {
         return nullptr;
     }
     if (sock->init(newsock)) { return sock; }
+    SYLAR_LOG_INFO(socket_logger) << "init error newsock=" << newsock;
     return nullptr;
 }
 
@@ -125,7 +126,7 @@ bool Socket::bind(const Address::ptr &addr) {
     }
     if (::bind(m_sock, addr->getAddr(), addr->getAddrlen())) {
         SYLAR_LOG_ERROR(socket_logger)
-            << "bind errno=" << errno << " str_err" << strerror(errno);
+            << "bind errno=" << errno << " str_err=" << strerror(errno);
         return false;
     }
     getLocalAddress();
@@ -358,8 +359,8 @@ bool Socket::cancelALL() const {
 }
 
 bool Socket::init(int sock) {
-    FdCtx::ptr ctx = FdMgr::GetInstance()->get(m_sock);
-    if (ctx && ctx->isSocked() && ctx->isClose()) {
+    FdCtx::ptr ctx = FdMgr::GetInstance()->get(sock);
+    if (ctx && ctx->isSocked() && !ctx->isClose()) {
         m_sock = sock;
         m_isConnected = true;
         initSock();
