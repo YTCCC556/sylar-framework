@@ -10,12 +10,12 @@
 
 namespace ytccc::http {
 
-static ytccc::Logger::ptr g_logger = SYLAR_LOG_NAME("system");
-static ytccc::ConfigVar<uint64_t>::ptr g_http_request_buffer_size =
-    ytccc::Config::Lookup("http.request.buffer_size", (uint64_t) (4 * 1024),
+static Logger::ptr g_logger = SYLAR_LOG_NAME("system");
+static ConfigVar<uint64_t>::ptr g_http_request_buffer_size =
+    Config::Lookup("http.request.buffer_size", (uint64_t) (4 * 1024),
                           "http request buffer size");
-static ytccc::ConfigVar<uint64_t>::ptr g_http_request_buffer_max_body_size =
-    ytccc::Config::Lookup("http.request.buffer_size",
+static ConfigVar<uint64_t>::ptr g_http_request_buffer_max_body_size =
+    Config::Lookup("http.request.buffer_size",
                           (uint64_t) (4 * 1024 * 1024),
                           "http request max body size");
 

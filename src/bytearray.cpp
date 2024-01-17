@@ -93,7 +93,7 @@ void ByteArray::writeUint32(uint32_t value) {
         // 0x7f:0111 1111，与上0x7f取低七位数字，或上0x80，添加标记位
         value >>= 7;// 右移七位，处理更高位数字
     }//8位二进制，最高位表示是否有后续字节，其余7位存储数据。
-    tmp[i++] = value; // 将剩余不足8位数字存入
+    tmp[i++] = value;// 将剩余不足8位数字存入
     write(tmp, i);
 }
 void ByteArray::writeInt64(int64_t value) {
@@ -343,8 +343,9 @@ void ByteArray::read(void *buf, size_t size, size_t position) const {
     }
 }
 void ByteArray::setPosition(size_t v) {
-    if (v > m_size) throw std::out_of_range("set position out of range");
+    if (v > m_capacity) throw std::out_of_range("set position out of range");
     m_position = v;
+    if (m_position > m_size) m_size = m_position;
     m_cur = m_root;
     while (v > m_cur->size) {
         v -= m_cur->size;
@@ -492,6 +493,8 @@ uint64_t ByteArray::getReadBuffers(std::vector<iovec> &buffers, uint64_t len,
 uint64_t ByteArray::getWriteBuffers(std::vector<iovec> &buffers, uint64_t len) {
     if (len == 0) return 0;
     addCapacity(len);
+    uint64_t size = len;
+
     size_t npos = m_position % m_baseSize;
     size_t ncap = m_cur->size - npos;
     struct iovec iov {};
@@ -500,6 +503,7 @@ uint64_t ByteArray::getWriteBuffers(std::vector<iovec> &buffers, uint64_t len) {
         if (ncap >= len) {
             iov.iov_base = cur->ptr + npos;
             iov.iov_len = len;
+            len = 0;
         } else {
             iov.iov_base = cur->ptr + npos;
             iov.iov_len = ncap;
@@ -510,7 +514,7 @@ uint64_t ByteArray::getWriteBuffers(std::vector<iovec> &buffers, uint64_t len) {
         }
         buffers.push_back(iov);
     }
-    return len;
+    return size;
 }
 void ByteArray::addCapacity(size_t size) {
     size_t old_cap = getCapacity();// 剩余容量

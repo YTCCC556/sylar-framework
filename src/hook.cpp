@@ -18,8 +18,8 @@ ytccc::Logger::ptr hook_logger = SYLAR_LOG_NAME("system");
 
 namespace ytccc {
 
-static ytccc::ConfigVar<int>::ptr g_tcp_timeout = ytccc::Config::Lookup(
-        "tcp.connect.timeout", 5000, "tcp connect timeout");
+static ytccc::ConfigVar<int>::ptr g_tcp_timeout =
+    ytccc::Config::Lookup("tcp.connect.timeout", 5000, "tcp connect timeout");
 static thread_local bool t_hook_enable = false;
 
 #define HOOK_FUN(XX)                                                           \
@@ -107,22 +107,20 @@ retry:
         // SYLAR_LOG_DEBUG(hook_logger) << "do_io<" << hook_fun_name << ">";
         ytccc::IOManager *iom = ytccc::IOManager::GetThis();
         ytccc::Timer::ptr timer;
-        std::weak_ptr<timer_info> winfo(
-                tinfo);// 避免在定时器回调函数中形成循环引用
+        std::weak_ptr<timer_info> winfo(tinfo);
+        // 避免在定时器回调函数中形成循环引用
         if (to != (uint64_t) -1) {
             // TODO 条件定时器就是用来取消事件的吗
             timer = iom->addConditionTimer(
-                    to,
-                    [winfo, fd, iom, event]() {
-                        auto t = winfo.lock();
-                        if (!t || t->cancelled) {
-                            return;
-                        }// 已经被取消了，直接返回
-                        // 否则，设置标志，取消事件
-                        t->cancelled = ETIMEDOUT;
-                        iom->cancelEvent(fd, (ytccc::IOManager::Event)(event));
-                    },
-                    winfo);
+                to,
+                [winfo, fd, iom, event]() {
+                    auto t = winfo.lock();
+                    if (!t || t->cancelled) { return; }// 已经被取消了，直接返回
+                    // 否则，设置标志，取消事件
+                    t->cancelled = ETIMEDOUT;
+                    iom->cancelEvent(fd, (ytccc::IOManager::Event)(event));
+                },
+                winfo);
         }
 
         int rt = iom->addEvent(fd, (ytccc::IOManager::Event)(event));
@@ -133,8 +131,8 @@ retry:
                         << ") retry c=" << c
                         << " used=" << (ytccc::GetCurrentMS() - now);
             }*/
-            SYLAR_LOG_ERROR(hook_logger) << hook_fun_name << " addEvent(" << fd
-                                         << "," << event << ")";
+            SYLAR_LOG_ERROR(hook_logger)
+                << hook_fun_name << " addEvent(" << fd << "," << event << ")";
             if (timer) { timer->cancel(); }
             return -1;
         } else {
@@ -233,14 +231,14 @@ int connect_with_timeout(int fd, const struct sockaddr *addr, socklen_t addrlen,
     std::weak_ptr<timer_info> winfo(tinfo);
     if (timeout_ms != (uint64_t) -1) {
         timer = iom->addConditionTimer(
-                timeout_ms,
-                [winfo, fd, iom]() {
-                    auto t = winfo.lock();
-                    if (!t || t->cancelled) { return; }
-                    t->cancelled = ETIMEDOUT;
-                    iom->cancelEvent(fd, ytccc::IOManager::WRITE);
-                },
-                winfo);
+            timeout_ms,
+            [winfo, fd, iom]() {
+                auto t = winfo.lock();
+                if (!t || t->cancelled) { return; }
+                t->cancelled = ETIMEDOUT;
+                iom->cancelEvent(fd, ytccc::IOManager::WRITE);
+            },
+            winfo);
     }
     int rt = iom->addEvent(fd, ytccc::IOManager::WRITE);
     if (rt == 0) {
@@ -254,7 +252,7 @@ int connect_with_timeout(int fd, const struct sockaddr *addr, socklen_t addrlen,
     } else {
         if (timer) { timer->cancel(); }
         SYLAR_LOG_ERROR(hook_logger)
-                << "connect addEvent (" << fd << ", WRITE) error";
+            << "connect addEvent (" << fd << ", WRITE) error";
     }
 
     int error = 0;

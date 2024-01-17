@@ -237,7 +237,7 @@ int Socket::recv(iovec *buffers, size_t length, int flags) const {
         memset(&msg, 0, sizeof(msg));
         msg.msg_iov = (iovec *) buffers;
         msg.msg_iovlen = length;
-        return (int) ::recvmsg(m_sock, &msg, flags);
+        return ::recvmsg(m_sock, &msg, flags);
     }
     return -1;
 }

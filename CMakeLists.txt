@@ -35,6 +35,7 @@ set(LIB_SRC
         http/http11_parser.cc
         http/httpclient_parser.cc
         http/http_parser.cpp
+        src/tcp_server.cpp
 )
 
 add_library(framework SHARED ${LIB_SRC})
