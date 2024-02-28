@@ -10,6 +10,7 @@
 #include <utility>
 
 namespace ytccc {
+
 static std::atomic<uint64_t> s_fiber_id{0};   // 协程id
 static std::atomic<uint64_t> s_fiber_count{0};// 协程数
 // 线程局部变量
@@ -55,9 +56,11 @@ Fiber::Fiber(std::function<void()> cb, size_t stacksize, bool use_caller)
     m_ctx.uc_stack.ss_size = m_stacksize;// 栈的大小
     // makecontext 函数用于初始化一个上下文，使其执行特定的函数
     if (!use_caller) {
+        // 不使用use_caller线程调度任务,调度后运行t_scheduler_fiber线程
         makecontext(&m_ctx, &Fiber::MainFunc, 0);
     } else {
         // 将m_ctx所指向的上下文同func绑定，之后调用set context，以及swap context时，func会自动执行。
+        // 使用use_caller线程调度任务，调度后运行t_threadFiber线程
         makecontext(&m_ctx, &Fiber::CallerMainFunc, 0);
     }
 }
@@ -147,7 +150,7 @@ Fiber::ptr Fiber::GetThis() {
     if (t_fiber) {
         return t_fiber->shared_from_this();// 返回智能指针
     }
-    Fiber::ptr main_fiber(new Fiber);
+    Fiber::ptr main_fiber(new Fiber); // 新建的协程会被设为当前协程
     SYLAR_ASSERT(t_fiber == main_fiber.get());
     t_threadFiber = main_fiber;// 设置主协程
     return t_fiber->shared_from_this();

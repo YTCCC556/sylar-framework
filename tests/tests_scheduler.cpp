@@ -11,7 +11,6 @@ void test_fiber2() {
     SYLAR_LOG_INFO(g_logger)
             << "-----------------------------[test in fiber s_count=" << s_count
             << "]";
-
     // sleep(1);
     if (--s_count >= 0) {
         ytccc::Scheduler::GetThis()->schedule(&test_fiber2); // 不指定线程执行
@@ -26,7 +25,7 @@ void test01() {
 
 int main(int argc, char **argv) {
     ytccc::Thread::SetName("main");
-    ytccc::Scheduler sc(3, false, "test");
+    ytccc::Scheduler sc(1, false, "test");
     // ytccc::Scheduler sc;
     SYLAR_LOG_INFO(g_logger) << "-------------start--------------";
     sc.start();

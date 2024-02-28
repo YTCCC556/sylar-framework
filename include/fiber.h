@@ -31,6 +31,7 @@ private:
     Fiber();
 
 public:
+    // 协程计数加一，状态设为执行，将协程设置为当前协程，保存上下文信息。
     Fiber(std::function<void()> cb, size_t stacksize = 0,
           bool use_caller = false);
     ~Fiber();
@@ -50,7 +51,7 @@ public:
 public:
     // 设置当前协程
     static void SetThis(Fiber *f);
-    // 返回当前协程
+    // 返回当前协程 如果存在t_fiber直接返回，否则新建main_fiber协程，设置主协程
     static Fiber::ptr GetThis();
     // 协程切换到后台，设置状态为Ready状态
     static void YieldToReady();
@@ -74,6 +75,5 @@ private:
 };
 
 }// namespace ytccc
-
 
 #endif//SYLAR_FRAMEWORK_FIBER_H

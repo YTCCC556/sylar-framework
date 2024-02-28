@@ -80,6 +80,7 @@ void test_fileLog() {
             new ytccc::FileLogAppender("../log/log.txt"));
     fileLogAppender->setLevel(ytccc::LogLevel::DEBUG);
     logger->addAppender(fileLogAppender);
+    logger->addAppender(ytccc::LogAppender::ptr(new ytccc::StdoutLogAppender));
     logger->log(ytccc::LogLevel::DEBUG, event);
     logger->log(ytccc::LogLevel::ERROR, event);
 }
@@ -111,5 +112,6 @@ void test_loggerMgr() {
 int main(int argc, char **argv) {
     // test_stdLog();
     // test_macro();
-    test_loggerMgr();
+    test_fileLog();
+    // test_loggerMgr();
 }

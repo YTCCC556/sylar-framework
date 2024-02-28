@@ -181,7 +181,7 @@ void LogEvent::format(const char *fmt, va_list al) {
 
 //LogEventWrap
 LogEventWrap::LogEventWrap(LogEvent::ptr e) : m_event(e) {
-    //        wrap析构的时候将event写入
+    //wrap析构的时候将event写入
 }
 LogEventWrap::~LogEventWrap() {
     //获得指向logger对象的指针，并调用log方法
@@ -242,11 +242,19 @@ std::string LogFormatter::format(std::shared_ptr<Logger> logger,
     for (auto &i: m_items) { i->format(ss, logger, level, event); }
     return ss.str();
 }
+std::ostream &LogFormatter::format(std::ostream &ofs,
+                                   const std::shared_ptr<Logger> &logger,
+                                   LogLevel::Level level, LogEvent::ptr event) {
+    for (auto &i: m_items) { i->format(ofs, logger, level, event); }
+    return ofs;
+}
+
 //%xxx %xxx(xxx) %%转义 三种格式
 void LogFormatter::init() {
     // str,format,type
     std::vector<std::tuple<std::string, std::string, int>> vec;
     std::string n_str;
+    //"%d{%Y-%m-%d %H:%M:%S}%T%t%T%N%T%F%T[%p]%T[%c]%T%f:%l%T%m"
     for (size_t i = 0; i < m_pattern.size(); ++i) {
         // 当前位为%，才能通过此句代码
         if (m_pattern[i] != '%') {
@@ -320,41 +328,39 @@ void LogFormatter::init() {
     if (!n_str.empty()) { vec.emplace_back(n_str, "", 0); }//不空 存0
 
     static std::map<std::string, std::function<LogFormatter::FormatItem::ptr(
-                                         const std::string &str)>>
-            s_format_items = {
+                                     const std::string &str)>>
+        s_format_items = {
 #define XX(str, C)                                                             \
     {                                                                          \
         #str, [](const std::string &fmt) {                                     \
             return LogFormatter::FormatItem::ptr(new C(fmt));                  \
         }                                                                      \
     }
-
-                    XX(m, MessageFormatItem),   //m:消息
-                    XX(p, LevelFormatItem),     //p:日志级别
-                    XX(r, ElapseFormatItem),    //r:累计毫秒数
-                    XX(c, NameFormatItem),      //c:日志名称
-                    XX(t, ThreadIDFormatItem),  //t:线程id
-                    XX(n, NewLineFormatItem),   //n:换行
-                    XX(d, DateTimeFormatItem),  //d:时间
-                    XX(f, FilenameFormatItem),  //f:文件名
-                    XX(l, LineFormatItem),      //l:行号
-                    XX(T, TabFormatItem),       //T:Tab
-                    XX(F, FiberIDFormatItem),   //F:协程id
-                    XX(N, ThreadNameFormatItem),//N:线程名称
-
+            XX(m, MessageFormatItem),   //m:消息
+            XX(p, LevelFormatItem),     //p:日志级别
+            XX(r, ElapseFormatItem),    //r:累计毫秒数
+            XX(c, NameFormatItem),      //c:日志名称
+            XX(t, ThreadIDFormatItem),  //t:线程id
+            XX(n, NewLineFormatItem),   //n:换行
+            XX(d, DateTimeFormatItem),  //d:时间
+            XX(f, FilenameFormatItem),  //f:文件名
+            XX(l, LineFormatItem),      //l:行号
+            XX(T, TabFormatItem),       //T:Tab
+            XX(F, FiberIDFormatItem),   //F:协程id
+            XX(N, ThreadNameFormatItem),//N:线程名称
 #undef XX
-            };
+        };
     //std::vector<std::tuple<std::string, std::string, int>> vec;
     for (auto &i: vec) {
         if (std::get<2>(i) == 0) {
             // string类型
             m_items.push_back(
-                    FormatItem::ptr(new StringFormatItem(std::get<0>(i))));
+                FormatItem::ptr(new StringFormatItem(std::get<0>(i))));
         } else {
             auto it = s_format_items.find(std::get<0>(i));
             if (it == s_format_items.end()) {
                 m_items.push_back(FormatItem::ptr(new StringFormatItem(
-                        "<<error_format %" + std::get<0>(i) + ">>")));
+                    "<<error_format %" + std::get<0>(i) + ">>")));
                 m_error = true;
             } else {
                 m_items.push_back(it->second(std::get<1>(i)));
@@ -386,7 +392,9 @@ void StdoutLogAppender::log(std::shared_ptr<Logger> logger,
     if (level >= m_level) {
         MutexType::Lock lock(m_mutex);
         // std::string str = m_formatter->format(logger, level, event);
-        std::cout << m_formatter->format(logger, level, event) << std::endl;
+        //TODO 尝试更改输出多个空格问题
+        std::cout << m_formatter->format(logger, level, event) ;
+        // std::cout << m_formatter->format(logger, level, event) << std::endl;
     }
 }
 std::string StdoutLogAppender::toYamlString() {
@@ -403,8 +411,8 @@ std::string StdoutLogAppender::toYamlString() {
     return ss.str();
 }
 
-FileLogAppender::FileLogAppender(const std::string &filename)
-    : m_filename(filename) {
+FileLogAppender::FileLogAppender(std::string filename)
+    : m_filename(std::move(filename)) {
     reopen();
 }
 
@@ -418,8 +426,11 @@ void FileLogAppender::log(std::shared_ptr<Logger> logger, LogLevel::Level level,
             m_lastTime = now;
         }
         MutexType::Lock lock(m_mutex);
-        if (m_filestream << m_formatter->format(logger, level, event)) {
-            std::cout << "Error FileLogAppender::log";
+        // TODO filelogbug
+        auto temp = !m_formatter->format(m_filestream, logger, level, event);
+        // if (m_filestream << m_formatter->format(logger, level, event)) {
+        if (!m_formatter->format(m_filestream, logger, level, event)) {
+            std::cout << "FileLogAppender::log Error." <<std::endl;
         }
     }
 }
@@ -427,6 +438,7 @@ bool FileLogAppender::reopen() {
     MutexType::Lock lock(m_mutex);
     if (m_filestream) { m_filestream.close(); }
     m_filestream.open(m_filename, std::ios::app);
+    std::cout<<"open file "<<!!m_filestream<<std::endl;
     return !!m_filestream;
 }
 std::string FileLogAppender::toYamlString() {
@@ -448,7 +460,7 @@ std::string FileLogAppender::toYamlString() {
 Logger::Logger(const std::string name)
     : m_name(name), m_level(LogLevel::DEBUG) {
     m_formatter.reset(new LogFormatter(
-            "%d{%Y-%m-%d %H:%M:%S}%T%t%T%N%T%F%T[%p]%T[%c]%T%f:%l%T%m"));
+        "%d{%Y-%m-%d %H:%M:%S}%T%t%T%N%T%F%T[%p]%T[%c]%T%f:%l%T%m%n"));
     // if (name == "root") {
     //     m_appenders.push_back(LogAppender::ptr(new StdoutLogAppender));
     // }
@@ -457,7 +469,7 @@ Logger::Logger(const std::string name)
 void Logger::log(LogLevel::Level level, LogEvent::ptr event) {
     if (level >= m_level) {
         auto self =
-                shared_from_this();//std::shared_ptr 无法通过this指针创建，会导致循环引用，
+            shared_from_this();//std::shared_ptr 无法通过this指针创建，会导致循环引用，
         MutexType::Lock lock(m_mutex);
         if (!m_appenders.empty()) {
             for (auto &i: m_appenders) { i->log(self, level, event); }
@@ -603,7 +615,7 @@ public:
         }
         ld.name = n["name"].as<std::string>();
         ld.level = LogLevel::FromString(
-                n["level"].IsDefined() ? n["level"].as<std::string>() : "");
+            n["level"].IsDefined() ? n["level"].as<std::string>() : "");
         if (n["formatter"].IsDefined()) {
             ld.formatter = n["formatter"].as<std::string>();
         }
@@ -679,14 +691,14 @@ public:
 };
 
 ytccc::ConfigVar<std::set<LogDefine>>::ptr g_log_defines =
-        ytccc::Config::Lookup("logs", std::set<LogDefine>(), "logs config");
+    ytccc::Config::Lookup("logs", std::set<LogDefine>(), "logs config");
 
 struct LogIniter {
     LogIniter() {
         g_log_defines->addListener([](const std::set<LogDefine> &old_value,
                                       const std::set<LogDefine> &new_value) {
-            // SYLAR_LOG_INFO(SYLAR_LOG_ROOT())
-            //         << "on_logger_conf_changed";
+            SYLAR_LOG_INFO(SYLAR_LOG_ROOT())
+                    << "on_logger_conf_changed";
             //新增
             for (auto &i: new_value) {
                 auto it = old_value.find(i);
@@ -743,7 +755,7 @@ struct LogIniter {
         });
     }
 };
-static LogIniter __Log_init;
+static LogIniter __Log_init; // 静态声明会在程序启动时创建
 
 
 }// namespace ytccc

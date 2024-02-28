@@ -1,7 +1,8 @@
 logs:
   - name: root
     level: info
-    formatter: "%d{%Y-%m-%d %H:%M:%S} - %m%n"
+    formatter: "%d{%Y-%m-%d %H:%M:%S} - %T%t%T%N%T%m%n"
     appender:
       - type: FileLogAppender
-        file: "test.txt"
+        file: "../log/test.txt"
+      #- type: StdoutLogAppender

@@ -19,7 +19,8 @@ Semaphore::Semaphore(uint32_t count) {
 
 Semaphore::~Semaphore() {
     // 释放信号量，在用完信号量后对他进行清理
-    sem_destroy(&m_semaphore); }
+    sem_destroy(&m_semaphore);
+}
 
 void Semaphore::wait() {
     // 阻塞当前线程，直到信号量sem的值大于0，解除阻塞后将sem的值减一。
@@ -49,12 +50,13 @@ void Thread::SetName(const std::string &name) {
 
 Thread::Thread(std::function<void()> cb, const std::string &name)
     : m_cb(std::move(cb)), m_name(name) {
-    if (name.empty())  m_name = "UNKNOWN";
+    if (name.empty()) m_name = "UNKNOWN";
     // 创建线程
-    int rt = pthread_create(&m_thread, nullptr, &Thread::run, this);//这一步运行回调函数cb
+    int rt = pthread_create(&m_thread, nullptr, &Thread::run,
+                            this);//这一步运行回调函数cb
     if (rt) {
-        SYLAR_LOG_ERROR(g_logger) << "pthread_create thread fail,rt = " << rt
-                                  << " name= " << name;
+        SYLAR_LOG_ERROR(g_logger)
+            << "pthread_create thread fail,rt = " << rt << " name= " << name;
         throw std::logic_error("pthread_create error");
     }
     m_semaphore.wait();
@@ -69,8 +71,8 @@ void Thread::join() {
         // 常见场景是在主线程中等待子线程的结束。这可以确保主线程在子线程完成任务之前不会提前退出
         int rt = pthread_join(m_thread, nullptr);
         if (rt) {
-            SYLAR_LOG_ERROR(g_logger) << "pthread_join thread fail,rt = " << rt
-                                      << " name:" << m_name;
+            SYLAR_LOG_ERROR(g_logger)
+                << "pthread_join thread fail,rt = " << rt << " name:" << m_name;
             throw std::logic_error("pthread_join error");
         }
         m_thread = 0;
@@ -89,11 +91,11 @@ void *Thread::run(void *arg) {
     pthread_setname_np(pthread_self(), thread->m_name.substr(0, 15).c_str());
 
     std::function<void()> cb;
-    cb.swap(thread->m_cb); // 交换两个std::function对象的内容
+    cb.swap(thread->m_cb);// 交换两个std::function对象的内容
 
-    thread->m_semaphore.notify(); // 通知信号量，表示线程准备就绪
+    thread->m_semaphore.notify();// 通知信号量，表示线程准备就绪
 
-    cb(); // 执行回调函数
+    cb();// 执行回调函数
     return 0;
 }
 }// namespace ytccc

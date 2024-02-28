@@ -10,10 +10,9 @@ ytccc::RWMutex s_mutex;
 
 void fun1() {
     SYLAR_LOG_INFO(g_logger)
-            << "name: " << ytccc::Thread::GetName() << " this.name "
-            << ytccc::Thread::GetThis()->getName()
-            << " id:" << ytccc::GetThreadID() << " this.id "
-            << ytccc::Thread::GetThis()->getId();
+        << "name: " << ytccc::Thread::GetName() << " this.name "
+        << ytccc::Thread::GetThis()->getName() << " id:" << ytccc::GetThreadID()
+        << " this.id " << ytccc::Thread::GetThis()->getId();
 }
 
 void test_thread() {
@@ -21,7 +20,7 @@ void test_thread() {
     std::vector<ytccc::Thread::ptr> thrs;
     for (int i = 0; i < 5; ++i) {
         ytccc::Thread::ptr thr(
-                new ytccc::Thread(&fun1, "name_" + std::to_string(i)));
+            new ytccc::Thread(&fun1, "name_" + std::to_string(i)));
         thrs.push_back(thr);
     }
     for (int i = 0; i < 5; ++i) { thrs[i]->join(); }
@@ -32,10 +31,9 @@ void test_thread() {
 volatile int count = 0;
 void fun2() {
     SYLAR_LOG_INFO(g_logger)
-            << "name: " << ytccc::Thread::GetName() << " this.name "
-            << ytccc::Thread::GetThis()->getName()
-            << " id:" << ytccc::GetThreadID() << " this.id "
-            << ytccc::Thread::GetThis()->getId();
+        << "name: " << ytccc::Thread::GetName() << " this.name "
+        << ytccc::Thread::GetThis()->getName() << " id:" << ytccc::GetThreadID()
+        << " this.id " << ytccc::Thread::GetThis()->getId();
     for (int i = 0; i < 10000; ++i) {
         ytccc::RWMutex::WriteLock lock(s_mutex);
         // ytccc::RWMutex::ReadLock lock(s_mutex);
@@ -48,7 +46,7 @@ void test_thread2() {
     std::vector<ytccc::Thread::ptr> thrs;
     for (int i = 0; i < 5; ++i) {
         ytccc::Thread::ptr thr(
-                new ytccc::Thread(&fun2, "name_" + std::to_string(i)));
+            new ytccc::Thread(&fun2, "name_" + std::to_string(i)));
         thrs.push_back(thr);
     }
     for (int i = 0; i < 5; ++i) { thrs[i]->join(); }
@@ -58,8 +56,9 @@ void test_thread2() {
 }
 
 void fun3() {
+    static int i = 100;
     // SYLAR_LOG_INFO(g_logger) << std::string(2, 'x');
-    while (true) SYLAR_LOG_INFO(g_logger) << std::string(2, 'x');
+    while (--i > 0) SYLAR_LOG_INFO(g_logger) << std::string(2, 'x');
 }
 
 void fun4() {
@@ -72,14 +71,16 @@ void test_thread3() {
     YAML::Node root = YAML::LoadFile("../bin/conf/log2.yml");
     ytccc::Config::LoadFromYaml(root);
     std::vector<ytccc::Thread::ptr> thrs;
-    for (int i = 0; i < 2; ++i) {
-        ytccc::Thread::ptr thr(
-                new ytccc::Thread(&fun3, "name_" + std::to_string(i * 2)));
-        ytccc::Thread::ptr thr2(
-                new ytccc::Thread(&fun4, "name_" + std::to_string(i * 2 + 1)));
-        thrs.push_back(thr);
-        thrs.push_back(thr2);
-    }
+    ytccc::Thread::ptr thr(new ytccc::Thread(&fun3, "name_1"));
+    thrs.push_back(thr);
+    // for (int i = 0; i < 2; ++i) {
+    //     ytccc::Thread::ptr thr(
+    //             new ytccc::Thread(&fun3, "name_" + std::to_string(i * 2)));
+    //     ytccc::Thread::ptr thr2(
+    //             new ytccc::Thread(&fun4, "name_" + std::to_string(i * 2 + 1)));
+    //     thrs.push_back(thr);
+    //     thrs.push_back(thr2);
+    // }
     for (auto &thr: thrs) { thr->join(); }
 }
 
@@ -110,7 +111,7 @@ int test_open() {
 
 int main(int argc, char **argv) {
     // test_thread();
-    // test_thread2();
-    test_thread3();
+    test_thread2();
+    // test_thread3();
     // test_open();
 }

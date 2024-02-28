@@ -246,7 +246,7 @@ public:
     typedef RWMutex MutexType;
     typedef std::shared_ptr<ConfigVar> ptr;
     typedef std::function<void(const T &old_value, const T &new_value)>
-            on_change_cb;
+        on_change_cb;
     //functional封装成指针，lambda表达式，
     ConfigVar(const std::string &name, const T &default_value,
               const std::string &description = "")
@@ -259,8 +259,8 @@ public:
             return ToStr()(m_val);
         } catch (std::exception &e) {
             SYLAR_LOG_ERROR(SYLAR_LOG_ROOT())
-                    << "ConfigVar::toString exception" << e.what()
-                    << "convert:" << typeid(m_val).name() << "to string";
+                << "ConfigVar::toString exception" << e.what()
+                << "convert:" << typeid(m_val).name() << "to string";
         }
         return "";
     }
@@ -272,14 +272,14 @@ public:
             setValue(FromStr()(val));
         } catch (std::exception &e) {
             SYLAR_LOG_ERROR(SYLAR_LOG_ROOT())
-                    << "ConfigVar::toString exception" << e.what()
-                    << "convert : string to" << typeid(m_val).name();
+                << "ConfigVar::toString exception" << e.what()
+                << "convert : string to" << typeid(m_val).name();
         }
         return false;
     }
 
     std::string getTypeName() const override { return typeid(T).name(); }
-    const T getValue(){
+    const T getValue() {
         MutexType::ReadLock lock(m_mutex);
         return m_val;
     }
@@ -323,7 +323,6 @@ private:
 
 class Config {
 public:
-
     typedef RWMutex MutexType;
     typedef std::map<std::string, ConfigVarBase::ptr> ConfigVarMap;
 
@@ -351,10 +350,10 @@ public:
                 return tmp;
             } else {
                 SYLAR_LOG_ERROR(SYLAR_LOG_ROOT())
-                        << "Lookup name = " << name << " exists but type not "
-                        << typeid(T).name()
-                        << "real_type = " << it->second->getTypeName() << ""
-                        << it->second->toString();
+                    << "Lookup name = " << name << " exists but type not "
+                    << typeid(T).name()
+                    << "real_type = " << it->second->getTypeName() << ""
+                    << it->second->toString();
                 return nullptr;
             }
         }
@@ -364,7 +363,7 @@ public:
             throw std::invalid_argument(name);
         }
         typename ConfigVar<T>::ptr v(
-                new ConfigVar<T>(name, default_value, description));
+            new ConfigVar<T>(name, default_value, description));
         GetDatas()[name] = v;
         return v;
     }
@@ -382,7 +381,8 @@ public:
     static ConfigVarBase::ptr LookupBase(const std::string &name);
 
     //为了调试方便，返回整个map内容
-    static void Visit(const std::function<void(ConfigVarBase::ptr)>& cb);
+    static void Visit(const std::function<void(ConfigVarBase::ptr)> &cb);
+
 private:
     static ConfigVarMap &GetDatas() {
         static ConfigVarMap m_datas;

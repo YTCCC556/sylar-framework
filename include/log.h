@@ -23,11 +23,11 @@
 #define SYLAR_LOG_LEVEL(logger, level)                                         \
     if (logger->getLevel() <= level)                                           \
     ytccc::LogEventWrap(                                                       \
-            ytccc::LogEvent::ptr(new ytccc::LogEvent(                          \
-                    logger, level, ytccc::GetRelative(__FILE__), __LINE__, 0,  \
-                    ytccc::GetThreadID(), ytccc::GetFiberID(), time(0),        \
-                    ytccc::Thread::GetName())))                                \
-            .getSS()
+        ytccc::LogEvent::ptr(new ytccc::LogEvent(                              \
+            logger, level, ytccc::GetRelative(__FILE__), __LINE__, 0,          \
+            ytccc::GetThreadID(), ytccc::GetFiberID(), time(0),                \
+            ytccc::Thread::GetName())))                                        \
+        .getSS()
 
 #define SYLAR_LOG_DEBUG(logger) SYLAR_LOG_LEVEL(logger, ytccc::LogLevel::DEBUG)
 #define SYLAR_LOG_INFO(logger) SYLAR_LOG_LEVEL(logger, ytccc::LogLevel::INFO)
@@ -39,12 +39,12 @@
 #define SYLAR_LOG_FMT_LEVEL(logger, level, fmt, ...)                           \
     if (logger->getLevel() <= level)                                           \
     ytccc::LogEventWrap(                                                       \
-            ytccc::LogEvent::ptr(new ytccc::LogEvent(                          \
-                    logger, level, ytccc::GetRelative(__FILE__), __LINE__, 0,  \
-                    ytccc::GetThreadID(), ytccc::GetFiberID(), time(0),        \
-                    ytccc::Thread::GetName())))                                \
-            .getEvent()                                                        \
-            ->format(fmt, __VA_ARGS__)
+        ytccc::LogEvent::ptr(new ytccc::LogEvent(                              \
+            logger, level, ytccc::GetRelative(__FILE__), __LINE__, 0,          \
+            ytccc::GetThreadID(), ytccc::GetFiberID(), time(0),                \
+            ytccc::Thread::GetName())))                                        \
+        .getEvent()                                                            \
+        ->format(fmt, __VA_ARGS__)
 
 
 #define SYLAR_LOG_FMT_DEBUG(logger, fmt, ...)                                  \
@@ -157,6 +157,9 @@ public:
     LogFormatter(std::string pattern);
     std::string format(std::shared_ptr<Logger> logger, LogLevel::Level level,
                        LogEvent::ptr event);
+    std::ostream &format(std::ostream &ofs,
+                         const std::shared_ptr<Logger> &logger,
+                         LogLevel::Level level, LogEvent::ptr event);
     void init();
     bool isError() const { return m_error; }
     const std::string getPattern() const { return m_pattern; }
@@ -202,33 +205,6 @@ protected:
     LogFormatter::ptr m_formatter;// 定义输出格式
 };
 
-// 输出到控制台的Appender
-class StdoutLogAppender : public LogAppender {
-public:
-    typedef std::shared_ptr<StdoutLogAppender> ptr;
-    void log(std::shared_ptr<Logger> logger, LogLevel::Level level,
-             LogEvent::ptr event) override;
-    std::string toYamlString() override;
-
-private:
-};
-
-// 输出到文件的Appender
-class FileLogAppender : public LogAppender {
-public:
-    typedef std::shared_ptr<FileLogAppender> ptr;
-    FileLogAppender(const std::string &filename);
-    void log(std::shared_ptr<Logger> logger, LogLevel::Level level,
-             LogEvent::ptr event) override;
-    bool reopen();
-    std::string toYamlString() override;
-
-private:
-    std::string m_filename;
-    std::ofstream m_filestream;
-    uint64_t m_lastTime = 0;
-};
-
 //日志器
 class Logger : public std::enable_shared_from_this<Logger> {
     friend class LoggerManager;
@@ -267,6 +243,33 @@ private:
     LogFormatter::ptr m_formatter;
     Logger::ptr m_root;
     MutexType m_mutex;
+};
+
+// 输出到控制台的Appender
+class StdoutLogAppender : public LogAppender {
+public:
+    typedef std::shared_ptr<StdoutLogAppender> ptr;
+    void log(std::shared_ptr<Logger> logger, LogLevel::Level level,
+             LogEvent::ptr event) override;
+    std::string toYamlString() override;
+
+private:
+};
+
+// 输出到文件的Appender
+class FileLogAppender : public LogAppender {
+public:
+    typedef std::shared_ptr<FileLogAppender> ptr;
+    FileLogAppender(std::string filename);
+    void log(Logger::ptr logger, LogLevel::Level level,
+             LogEvent::ptr event) override;
+    bool reopen();
+    std::string toYamlString() override;
+
+private:
+    std::string m_filename;
+    std::ofstream m_filestream;
+    uint64_t m_lastTime = 0;
 };
 
 class LoggerManager {

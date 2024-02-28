@@ -7,19 +7,20 @@
 #include <utility>
 namespace ytccc {
 static ytccc::Logger::ptr g_logger = SYLAR_LOG_NAME("system");
-static thread_local Scheduler *t_scheduler = nullptr;
-static thread_local Fiber *t_scheduler_fiber = nullptr;
+static thread_local Scheduler *t_scheduler = nullptr;  // 调度线程
+static thread_local Fiber *t_scheduler_fiber = nullptr;// 协程
 // scheduler 实现
 Scheduler::Scheduler(size_t threads, bool use_caller, std::string name)
     : m_name(std::move(name)) {
     SYLAR_ASSERT(threads > 0);
-    if (use_caller) {
+    if (use_caller) {           //使用caller线程执行任务
         ytccc::Fiber::GetThis();// 初始化主协程
         --threads;
         SYLAR_ASSERT(GetThis() == nullptr);
-        t_scheduler = this;// TODO ?当前正在运行的协程
+        t_scheduler = this;// 设置调度线程？
         // 新建协程绑定cb并赋予调度协程，
         // 会在setcontext或swapcontext中调用makecontext绑定的func，在func中调用cb，也就是run()
+        // 设置调度协程？
         m_rootFiber.reset(new Fiber([this] { run(); }, 0, true));
         ytccc::Thread::SetName(m_name);
 
@@ -40,33 +41,38 @@ Scheduler::~Scheduler() {
     }
 }
 
-Scheduler *Scheduler::GetThis() { return t_scheduler; }
-Fiber *Scheduler::GetMainFiber() { return t_scheduler_fiber; }
+Scheduler *Scheduler::GetThis() {
+    //返回协程调度器
+    return t_scheduler;
+}
+Fiber *Scheduler::GetMainFiber() {
+    //返回当前协程调度器的调度协程
+    return t_scheduler_fiber;
+}
 
-void Scheduler::start() {
-    {// 线程池，启动线程
-        MutexType::Lock lock(m_mutex);
-        if (!m_stopping) {
-            return;// 默认为true，若为false，表示启动，返回
-        }
-        m_stopping = false;// 启动，切换标志位
-        SYLAR_ASSERT(m_threads.empty());
-        // 根据线程数量向线程池中添加线程
-        m_threads.resize(m_threadCount);
-        for (size_t i = 0; i < m_threadCount; ++i) {
-            m_threads[i].reset(new Thread([this] { run(); },
-                                          m_name + "_" + std::to_string(i)));
-            m_threadIDs.push_back(m_threads[i]->getId());
-        }
-        lock.unlock();
+void Scheduler::start() {// 线程池，启动线程
+    MutexType::Lock lock(m_mutex);
+    if (!m_stopping) {
+        return;// 默认为true，若为false，表示启动，返回
     }
-    // TODO syalr中被注释
-    // if (m_rootFiber) {// 调度协程，use_caller=true 有效
-    //     SYLAR_LOG_INFO(g_logger) << "m_rootFiber.call() " << m_rootFiber << " "
-    //                              << m_rootFiber->getState();
-    //     m_rootFiber->call();// 调度协程调用call方法
-    //     // SYLAR_LOG_INFO(g_logger) << "call out " << m_rootFiber->getState();
-    // }
+    m_stopping = false;// 启动，切换标志位
+    SYLAR_ASSERT(m_threads.empty());
+    // 根据线程数量向线程池中添加线程
+    m_threads.resize(m_threadCount);
+    for (size_t i = 0; i < m_threadCount; ++i) {
+        m_threads[i].reset(
+            new Thread([this] { run(); }, m_name + "_" + std::to_string(i)));
+        m_threadIDs.push_back(m_threads[i]->getId());
+    }
+    lock.unlock();
+
+    /*//TODO syalr中被注释
+    if (m_rootFiber) {// 调度协程，use_caller=true 有效
+        SYLAR_LOG_INFO(g_logger) << "m_rootFiber.call() " << m_rootFiber << " "
+                                 << m_rootFiber->getState();
+        m_rootFiber->call();// 调度协程调用call方法
+        // SYLAR_LOG_INFO(g_logger) << "call out " << m_rootFiber->getState();
+    }*/
 }
 void Scheduler::stop() {
     m_autoStop = true;
@@ -76,7 +82,7 @@ void Scheduler::stop() {
         // 这个线程只有创建Scheduler的线程
         SYLAR_LOG_INFO(g_logger) << this << " stopped";
         m_stopping = true;
-        bool temp = stopping();
+        // bool temp = stopping();
         if (stopping()) {// 让其他子类有清理任务的机会
             return;
         }
@@ -91,7 +97,7 @@ void Scheduler::stop() {
     }
     m_stopping = true;
     for (size_t i = 0; i < m_threadCount; ++i) {
-        tickle();// 唤醒线程
+        tickle();// 唤醒线程？
     }
     if (m_rootFiber) { tickle(); }
 
@@ -107,6 +113,7 @@ void Scheduler::stop() {
         // sleep(1);
         i->join();
     }
+    std::cout << "stop end" << std::endl;
 }
 void Scheduler::setThis() { t_scheduler = this; }
 void Scheduler::tickle() { SYLAR_LOG_INFO(g_logger) << "tickle"; }
