@@ -50,7 +50,7 @@ void IOManager::FdContext::triggerEvent(Event event) {
 }
 
 IOManager::IOManager(size_t threads, bool use_caller, const std::string &name)
-    : Scheduler(threads, use_caller, name) {
+    : Scheduler(threads, use_caller, name) { // TODO 会创建一个调度器吗？
     // 创建了一个 epoll 实例，并将其文件描述符保存在 m_epfd 变量中
     m_epfd = epoll_create(5000);
     SYLAR_ASSERT(m_epfd > 0);
@@ -64,14 +64,15 @@ IOManager::IOManager(size_t threads, bool use_caller, const std::string &name)
     epoll_event event;
     // memset 将 ptr 指向的内存区域的前 num 个字节都设置为 value。这在初始化数组或清除内存时非常有用
     memset(&event, 0, sizeof(epoll_event));
-    // 文件类型为可读，可写
+    // 文件类型为可读触发,边缘触发
     event.events = EPOLLIN | EPOLLET;
     event.data.fd = m_tickleFds[0];
     // 将管道的读取端设置为非阻塞模式
     // 非阻塞模式（没有数据可用，读取操作不会阻塞进程，而是立即返回一个错误或者0字节）
     rt = fcntl(m_tickleFds[0], F_SETFL, O_NONBLOCK);
     SYLAR_ASSERT(!rt);
-    // 将文件描述符添加到epoll实例中，监听可读事件，
+    // 将文件描述符添加到epoll实例中，监听可读事件，向epoll实例修改fd描述符
+    // 将文件描述符‘m_tickleFds’添加到epoll实例“m_epfd”中，并设置关注的事件类型和相关的用户数据。
     rt = epoll_ctl(m_epfd, EPOLL_CTL_ADD, m_tickleFds[0], &event);
     SYLAR_ASSERT(!rt);
 
@@ -244,7 +245,7 @@ bool IOManager::stopping() {
     return stopping(timeout);
 }
 bool IOManager::stopping(uint64_t &timeout) {
-    timeout = getNextTimer();
+    timeout = getNextTimer(); // 返回最近执行任务的时间间隔
     return timeout == ~0ull && m_pendingEventCount == 0 &&
            Scheduler::stopping();
 }
@@ -283,7 +284,7 @@ void IOManager::idle() {
                 // 正常返回发生事件的文件描述符的数量或者超时返回0。
                 break;
             }
-        } while (true);
+        } while (true); // 等待最小间隔时间后出来
 
         std::vector<std::function<void()>> cbs;
         listExpiredCb(cbs);
@@ -291,7 +292,7 @@ void IOManager::idle() {
             schedule(cbs.begin(), cbs.end());
             cbs.clear();
         }
-
+        // rt代表了发生的事件数量 ，处理发生的读写事件
         for (int i = 0; i < rt; ++i) {
             epoll_event &event = events[i];
             // SYLAR_LOG_INFO(g_logger) << event.data.fd;

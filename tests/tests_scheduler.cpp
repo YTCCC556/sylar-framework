@@ -30,7 +30,8 @@ int main(int argc, char **argv) {
     SYLAR_LOG_INFO(g_logger) << "-------------start--------------";
     sc.start();
     SYLAR_LOG_INFO(g_logger) << "-------------test_fiber--------------";
-    sc.schedule(&test_fiber2);
+    sc.schedule(&test_fiber2); // 添加到m_fibers中
+    // sleep(10);
     SYLAR_LOG_INFO(g_logger) << "-------------end--------------";
     sc.stop();
     SYLAR_LOG_INFO(g_logger) << "-------------over---------------";

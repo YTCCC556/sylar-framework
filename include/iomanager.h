@@ -23,7 +23,7 @@ private:
         struct EventContext {
             Scheduler *scheduler = nullptr;// 事件执行的scheduler
             Fiber::ptr fiber;              // 事件协程
-            std::function<void()> cb;      //回调函数
+            std::function<void()> cb;      // 回调函数
         };
         EventContext &getContext(Event event);
         void resetContext(EventContext &ctx);

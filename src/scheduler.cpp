@@ -97,7 +97,7 @@ void Scheduler::stop() {
     }
     m_stopping = true;
     for (size_t i = 0; i < m_threadCount; ++i) {
-        tickle();// 唤醒线程？
+        tickle();
     }
     if (m_rootFiber) { tickle(); }
 
@@ -111,9 +111,9 @@ void Scheduler::stop() {
     }
     for (auto &i: thrs) {
         // sleep(1);
-        i->join();
+        i->join();// 等待i执行完成，会阻塞在这里
     }
-    std::cout << "stop end" << std::endl;
+    // std::cout << "stop end" << std::endl;
 }
 void Scheduler::setThis() { t_scheduler = this; }
 void Scheduler::tickle() { SYLAR_LOG_INFO(g_logger) << "tickle"; }
@@ -137,7 +137,7 @@ void Scheduler::run() {
         t_scheduler_fiber = Fiber::GetThis().get();// 把当前协程设为主协程
     }
     Fiber::ptr idle_fiber(new Fiber([this] { idle(); }));//空闲协程
-    Fiber::ptr cb_fiber;                                 // 用于执行任务
+    Fiber::ptr cb_fiber;                                  // 用于执行任务
     FiberAndThread ft;
     while (true) {
         ft.reset();
@@ -199,10 +199,10 @@ void Scheduler::run() {
                 cb_fiber.reset();
             } else if (cb_fiber->getState() == Fiber::EXCEPT ||
                        cb_fiber->getState() == Fiber::TERM) {
-                cb_fiber->reset(nullptr);// 智能指针的reset，不会引起析构
+                cb_fiber->reset(nullptr);// 将指针指向对象设空，智能指针的reset，不会引起析构
             } else {
                 cb_fiber->setState(Fiber::HOLD);
-                cb_fiber.reset();
+                cb_fiber.reset(); // 释放所指向对象
             }
         } else {
             // 为什么不直接执行idle，如果这次执行有任务，就不执行idle，直到没有任务才执行idle

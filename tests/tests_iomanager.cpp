@@ -1,7 +1,6 @@
 //
 // Created by YTCCC on 2023/11/28.
 //
-
 #include "ytccc.h"
 #include <arpa/inet.h>
 #include <fcntl.h>
@@ -9,7 +8,6 @@
 #include <netinet/in.h>
 #include <sys/epoll.h>
 #include <sys/socket.h>
-#include <sys/types.h>
 #include <unistd.h>
 
 ytccc::Logger::ptr g_logger = SYLAR_LOG_NAME("root");
@@ -54,6 +52,7 @@ void test1() {
 
 void test_timer1() {
     ytccc::IOManager iom(1);
+    // IOManager继承了TimerManager
     iom.addTimer(
             500, []() { SYLAR_LOG_INFO(g_logger) << "hello timer"; }, true);
 }
@@ -87,8 +86,8 @@ void test_timer3() {
 
 int main(int argc, char **argv) {
     // test1();
-    // test_timer1();
-    test_timer2();
+    test_timer1();
+    // test_timer2();
     // test_timer3();
     return 0;
 }

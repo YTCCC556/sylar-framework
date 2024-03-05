@@ -29,7 +29,7 @@ private:
     Timer(uint64_t next);
 
 private:
-    bool m_recurring = false;// 是否循环执行器
+    bool m_recurring = false;// 是否循环执行
     uint64_t m_ms = 0;       // 执行周期
     uint64_t m_next = 0;     // 精确的执行时间
     TimerManager *m_manager = nullptr;
